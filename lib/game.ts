@@ -6,6 +6,7 @@ export type GameRoom = {
   title: string;
   status: GameStatus;
   time_limit_seconds: number;
+  current_time_limit_seconds: number;
   current_question: number;
   question_count: number;
   max_players: number;
@@ -30,6 +31,7 @@ export type GameQuestion = {
   position: number;
   prompt: string;
   options: string[];
+  time_limit_seconds: number;
   correct_option?: number;
 };
 

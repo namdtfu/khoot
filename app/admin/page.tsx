@@ -35,6 +35,7 @@ type Question = {
   prompt: string;
   options: string[];
   correct_option: number;
+  time_limit_seconds: number | null;
   position: number;
 };
 
@@ -42,6 +43,7 @@ const EMPTY_QUESTION = {
   prompt: "",
   options: ["", "", "", ""],
   correct_option: 0,
+  time_limit_seconds: null as number | null,
 };
 
 const IMPORT_EXAMPLE = `Câu 1: Từ “hello” có nghĩa là gì?
@@ -429,7 +431,7 @@ export default function AdminPage() {
 
   const openNewQuestion = () => {
     setEditingQuestionId(null);
-    setQuestionForm({ prompt: "", options: ["", "", "", ""], correct_option: 0 });
+    setQuestionForm({ ...EMPTY_QUESTION, options: ["", "", "", ""] });
     setEditorOpen(true);
   };
 
@@ -511,6 +513,7 @@ export default function AdminPage() {
       prompt: question.prompt,
       options: [...question.options],
       correct_option: question.correct_option,
+      time_limit_seconds: question.time_limit_seconds,
     });
     setEditorOpen(true);
   };
@@ -522,12 +525,24 @@ export default function AdminPage() {
       setNotice({ type: "error", text: "Hãy nhập nội dung và đủ 4 đáp án." });
       return;
     }
+    if (
+      questionForm.time_limit_seconds !== null
+      && (
+        !Number.isInteger(questionForm.time_limit_seconds)
+        || questionForm.time_limit_seconds < 5
+        || questionForm.time_limit_seconds > 120
+      )
+    ) {
+      setNotice({ type: "error", text: "Thời gian riêng của câu phải từ 5 đến 120 giây." });
+      return;
+    }
     setBusy(true); setNotice(null);
     const payload = {
       set_id: selectedSet.id,
       prompt: questionForm.prompt.trim(),
       options: questionForm.options.map((option) => option.trim()),
       correct_option: questionForm.correct_option,
+      time_limit_seconds: questionForm.time_limit_seconds,
       position: editingQuestionId
         ? questions.find((item) => item.id === editingQuestionId)?.position ?? 0
         : questions.length,
@@ -859,6 +874,24 @@ export default function AdminPage() {
                   <label>Nội dung / định nghĩa
                     <textarea value={questionForm.prompt} onChange={(event) => setQuestionForm({ ...questionForm, prompt: event.target.value })} rows={3} placeholder="Ví dụ: Từ “curious” có nghĩa là gì?" autoFocus required />
                   </label>
+                  <label className={styles.questionTimeField}>Thời gian riêng cho câu này
+                    <div className={styles.timeInputRow}>
+                      <input
+                        type="number"
+                        min={5}
+                        max={120}
+                        step={1}
+                        value={questionForm.time_limit_seconds ?? ""}
+                        placeholder={String(packForm.time_limit_seconds)}
+                        onChange={(event) => setQuestionForm({
+                          ...questionForm,
+                          time_limit_seconds: event.target.value === "" ? null : Number(event.target.value),
+                        })}
+                      />
+                      <span>giây</span>
+                    </div>
+                    <small>Để trống để dùng mặc định {packForm.time_limit_seconds} giây của bộ đề.</small>
+                  </label>
                   <div className={styles.optionsGrid}>
                     {questionForm.options.map((option, index) => (
                       <label key={index} className={questionForm.correct_option === index ? styles.correctOption : ""}>
@@ -888,7 +921,12 @@ export default function AdminPage() {
                     <article key={question.id} className={styles.questionCard}>
                       <span className={styles.number}>{String(index + 1).padStart(2, "0")}</span>
                       <div className={styles.questionBody}>
-                        <h3>{question.prompt}</h3>
+                        <div className={styles.questionTitleRow}>
+                          <h3>{question.prompt}</h3>
+                          <span className={question.time_limit_seconds ? styles.customTimeBadge : styles.defaultTimeBadge}>
+                            {question.time_limit_seconds ?? packForm.time_limit_seconds} giây · {question.time_limit_seconds ? "riêng" : "mặc định"}
+                          </span>
+                        </div>
                         <div className={styles.answerPills}>
                           {question.options.map((option, optionIndex) => <span key={optionIndex} className={optionIndex === question.correct_option ? styles.correctPill : ""}>{String.fromCharCode(65 + optionIndex)}. {option}{optionIndex === question.correct_option && " ✓"}</span>)}
                         </div>

@@ -172,7 +172,11 @@ export default function PlayPage() {
   const room = snapshot.room;
   const question = snapshot.question;
   const self = snapshot.self;
-  const remaining = secondsRemaining(room.question_started_at, room.time_limit_seconds, now);
+  const remaining = secondsRemaining(
+    room.question_started_at,
+    room.current_time_limit_seconds ?? room.time_limit_seconds,
+    now,
+  );
   const answered = self?.selected_option != null;
 
   const renderContent = () => {

@@ -95,7 +95,11 @@ export default function HostPage() {
   }, [roomId]);
 
   const remaining = snapshot
-    ? secondsRemaining(snapshot.room.question_started_at, snapshot.room.time_limit_seconds, now)
+    ? secondsRemaining(
+      snapshot.room.question_started_at,
+      snapshot.room.current_time_limit_seconds ?? snapshot.room.time_limit_seconds,
+      now,
+    )
     : 0;
   const allAnswered = Boolean(
     snapshot
@@ -328,7 +332,10 @@ export default function HostPage() {
         <div className={styles.roomHeading}>
           <div><span className={styles.eyebrow}>PHÒNG THI REALTIME</span><h1>{room.title}</h1><p>{room.status === "waiting" ? "Chia sẻ liên kết để học sinh tham gia." : "Máy quản trị đang tự động điều phối trận đấu."}</p></div>
           <div className={styles.roomControls}>
-            <div className={styles.timeChip}><b>{room.time_limit_seconds}</b> giây / câu</div>
+            <div className={styles.timeChip}>
+              <b>{room.status === "playing" || room.status === "reveal" ? room.current_time_limit_seconds : room.time_limit_seconds}</b>
+              {room.status === "playing" || room.status === "reveal" ? "giây · câu hiện tại" : "giây · mặc định"}
+            </div>
             <button className={styles.closeRoomButton} type="button" onClick={closeRoom} disabled={closing}>
               {closing ? "Đang đóng…" : "Đóng phòng"}
             </button>
