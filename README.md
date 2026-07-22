@@ -4,7 +4,7 @@ Khoot Mini là trò chơi trắc nghiệm dành cho nhóm 5 người, kèm trang
 
 ## Tính năng
 
-- Đăng ký, đăng nhập và đăng xuất bằng địa chỉ email và mật khẩu.
+- Đăng nhập và đăng xuất bằng tài khoản quản trị được tạo trực tiếp trong Supabase.
 - Mỗi tài khoản chỉ quản lý dữ liệu của chính mình nhờ chính sách bảo mật theo từng hàng.
 - Tạo, sửa, xóa và xuất bản bộ đề thuộc bất kỳ lĩnh vực nào.
 - Mỗi câu hỏi gồm nội dung hoặc định nghĩa, đúng 4 lựa chọn và 1 đáp án chính xác.

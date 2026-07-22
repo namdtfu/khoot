@@ -67,19 +67,6 @@
   background: var(--cream);
   box-shadow: 16px 18px 0 rgba(19,42,37,.09);
 }
-.authTabs { display: flex; gap: 5px; margin-bottom: 32px; padding: 4px; border-radius: 9px; background: #ece6dc; }
-.authTabs button {
-  flex: 1;
-  padding: 10px;
-  cursor: pointer;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #71807b;
-  font-size: 12px;
-  font-weight: 800;
-}
-.authTabs .activeTab { background: white; color: var(--ink); box-shadow: 0 2px 6px rgba(19,42,37,.08); }
 .authCard h2 { margin: 7px 0 25px; font-size: 28px; letter-spacing: -1px; }
 .authCard form, .questionEditor { display: flex; flex-direction: column; gap: 17px; }
 .authCard label, .packSettings label, .questionEditor label {

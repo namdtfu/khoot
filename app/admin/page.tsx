@@ -35,7 +35,6 @@ const EMPTY_QUESTION = {
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sets, setSets] = useState<QuestionSet[]>([]);
@@ -115,14 +114,8 @@ export default function AdminPage() {
     event.preventDefault();
     setBusy(true); setNotice(null);
     try {
-      if (authMode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        if (!data.session) setNotice({ type: "success", text: "Đã tạo tài khoản. Hãy kiểm tra email để xác nhận." });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
     } catch (error) { showError(error); }
     finally { setBusy(false); }
   };
@@ -258,25 +251,21 @@ export default function AdminPage() {
           </div>
         </section>
         <section className={styles.authCard}>
-          <div className={styles.authTabs}>
-            <button className={authMode === "login" ? styles.activeTab : ""} onClick={() => setAuthMode("login")}>Đăng nhập</button>
-            <button className={authMode === "signup" ? styles.activeTab : ""} onClick={() => setAuthMode("signup")}>Tạo tài khoản</button>
-          </div>
-          <span className={styles.cardEyebrow}>{authMode === "login" ? "CHÀO MỪNG TRỞ LẠI" : "BẮT ĐẦU MIỄN PHÍ"}</span>
-          <h2>{authMode === "login" ? "Vào phòng quản trị" : "Tạo tài khoản quản trị"}</h2>
+          <span className={styles.cardEyebrow}>CHÀO MỪNG TRỞ LẠI</span>
+          <h2>Vào phòng quản trị</h2>
           <form onSubmit={submitAuth}>
             <label>Địa chỉ email
               <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="admin@example.com" autoComplete="email" required />
             </label>
             <label>Mật khẩu
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Tối thiểu 6 ký tự" minLength={6} autoComplete={authMode === "login" ? "current-password" : "new-password"} required />
+              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Tối thiểu 6 ký tự" minLength={6} autoComplete="current-password" required />
             </label>
             {notice && <p className={notice.type === "error" ? styles.errorNotice : styles.successNotice}>{notice.text}</p>}
             <button className={styles.submitButton} disabled={busy} type="submit">
-              {busy ? "Đang xử lý…" : authMode === "login" ? "Đăng nhập →" : "Tạo tài khoản →"}
+              {busy ? "Đang xử lý…" : "Đăng nhập →"}
             </button>
           </form>
-          <small>Dữ liệu của mỗi tài khoản được tách riêng và bảo vệ bằng chính sách truy cập.</small>
+          <small>Tài khoản quản trị được tạo trực tiếp trong Supabase.</small>
         </section>
       </main>
     );
