@@ -9,6 +9,7 @@ import {
   buildPlayerLink,
   countdownValue,
   formatResponseTime,
+  getBasePath,
   getErrorMessage,
   getRoomToken,
   secondsRemaining,
@@ -24,6 +25,7 @@ export default function HostPage() {
   const [error, setError] = useState("");
   const [now, setNow] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [closing, setClosing] = useState(false);
   const transitioning = useRef(false);
 
   useEffect(() => {
@@ -176,6 +178,37 @@ export default function HostPage() {
     window.setTimeout(() => setCopied(false), 1800);
   };
 
+  const closeRoom = async () => {
+    if (!roomId || !snapshot || closing || transitioning.current) return;
+    const confirmed = window.confirm(
+      snapshot.room.status === "finished"
+        ? "Đóng phòng này? Link cố định sẽ trở về trạng thái chờ phiên mới. Kết quả vẫn được lưu."
+        : "Đóng phòng ngay? Phiên thi sẽ kết thúc và học sinh không thể gửi thêm đáp án. Kết quả đã có vẫn được lưu.",
+    );
+    if (!confirmed) return;
+
+    setClosing(true);
+    transitioning.current = true;
+    const { data, error: closeError } = await supabase.rpc("close_game_session", {
+      p_room_id: roomId,
+    });
+
+    if (closeError) {
+      setError(getErrorMessage(closeError));
+      setClosing(false);
+      transitioning.current = false;
+      return;
+    }
+
+    const result = data as { lobby_token?: string | null };
+    const lobbyToken = result.lobby_token ?? snapshot.room.lobby_token;
+    window.location.assign(
+      lobbyToken
+        ? `${getBasePath()}/room/?room=${lobbyToken}`
+        : `${getBasePath()}/admin/`,
+    );
+  };
+
   if (!authReady) {
     return <main className={styles.shell}><div className={styles.loading}><strong>KHOOT!</strong><p>Đang mở phòng điều khiển…</p></div></main>;
   }
@@ -294,7 +327,12 @@ export default function HostPage() {
       <div className={styles.main}>
         <div className={styles.roomHeading}>
           <div><span className={styles.eyebrow}>PHÒNG THI REALTIME</span><h1>{room.title}</h1><p>{room.status === "waiting" ? "Chia sẻ liên kết để học sinh tham gia." : "Máy quản trị đang tự động điều phối trận đấu."}</p></div>
-          <div className={styles.timeChip}><b>{room.time_limit_seconds}</b> giây / câu</div>
+          <div className={styles.roomControls}>
+            <div className={styles.timeChip}><b>{room.time_limit_seconds}</b> giây / câu</div>
+            <button className={styles.closeRoomButton} type="button" onClick={closeRoom} disabled={closing}>
+              {closing ? "Đang đóng…" : "Đóng phòng"}
+            </button>
+          </div>
         </div>
         {error && <p className={styles.errorMessage}>{error}</p>}
         <section className={styles.classOverview} aria-label="Tổng quan lớp học">

@@ -81,6 +81,23 @@
   font-weight: 850;
 }
 .timeChip b { color: var(--orange); font-size: 20px; }
+.roomControls { display: flex; align-items: stretch; gap: 9px; }
+.closeRoomButton {
+  padding: 0 15px;
+  cursor: pointer;
+  border: 1px solid #efb29e;
+  border-radius: 9px;
+  background: #fff0e9;
+  color: #a33f22;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+  transition: background .2s, border-color .2s, transform .2s;
+}
+.closeRoomButton:hover { border-color: #dc8364; background: #ffe5da; transform: translateY(-1px); }
+.closeRoomButton:focus-visible { outline: 3px solid rgba(255,111,61,.22); outline-offset: 2px; }
+.closeRoomButton:disabled { cursor: wait; opacity: .55; transform: none; }
 
 .classOverview {
   display: grid;
@@ -642,7 +659,9 @@ button.answer { cursor: pointer; font: inherit; }
   .role { font-size: 8px; }
   .main { width: min(100% - 20px, 1180px); padding-top: 18px; }
   .roomHeading { align-items: flex-start; flex-direction: column; }
+  .roomControls { width: 100%; }
   .timeChip { padding: 8px 11px; }
+  .closeRoomButton { margin-left: auto; padding: 0 13px; }
   .overviewCard { min-height: 98px; padding: 13px; }
   .overviewCard strong { font-size: 23px; }
   .stage, .sidePanel, .studentStage, .historyPanel { border-radius: 12px; box-shadow: 4px 5px 0 rgba(19,42,37,.08); }
