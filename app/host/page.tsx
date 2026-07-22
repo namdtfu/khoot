@@ -145,6 +145,31 @@ export default function HostPage() {
     [snapshot],
   );
 
+  const hostMetrics = useMemo(() => {
+    const stats = snapshot?.stats ?? [];
+    const players = snapshot?.players ?? [];
+    const questionCount = snapshot?.room.question_count ?? 0;
+    const answered = stats.reduce((total, stat) => total + stat.answered_count, 0);
+    const correct = stats.reduce((total, stat) => total + stat.correct_count, 0);
+    const possibleAnswers = players.length * questionCount;
+    const ready = players.filter((player) => player.is_ready).length;
+    const waitingCurrent = players.filter((player) => !player.answered).length;
+    const needsSupport = stats.filter((stat) => (
+      stat.answered_count >= 2 && stat.correct_count / stat.answered_count < 0.5
+    )).length;
+
+    return {
+      answered,
+      correct,
+      wrong: answered - correct,
+      ready,
+      waitingCurrent,
+      needsSupport,
+      progress: possibleAnswers > 0 ? Math.round((answered / possibleAnswers) * 100) : 0,
+      accuracy: answered > 0 ? Math.round((correct / answered) * 100) : 0,
+    };
+  }, [snapshot]);
+
   const copyLink = async () => {
     await navigator.clipboard.writeText(playerLink);
     setCopied(true);
@@ -272,6 +297,67 @@ export default function HostPage() {
           <div className={styles.timeChip}><b>{room.time_limit_seconds}</b> giây / câu</div>
         </div>
         {error && <p className={styles.errorMessage}>{error}</p>}
+        <section className={styles.classOverview} aria-label="Tổng quan lớp học">
+          {room.status === "waiting" ? (
+            <>
+              <div className={styles.overviewCard}>
+                <span>ĐÃ VÀO PHÒNG</span>
+                <strong>{snapshot.players.length}/{room.max_players}</strong>
+                <small>Số học sinh hiện có</small>
+              </div>
+              <div className={styles.overviewCard}>
+                <span>ĐÃ SẴN SÀNG</span>
+                <strong>{hostMetrics.ready}/{room.max_players}</strong>
+                <small>Có thể bắt đầu khi đủ</small>
+              </div>
+              <div className={styles.overviewCard}>
+                <span>CÒN THIẾU</span>
+                <strong>{Math.max(room.max_players - snapshot.players.length, 0)}</strong>
+                <small>Vị trí đang chờ</small>
+              </div>
+              <div className={styles.overviewCard}>
+                <span>THỜI GIAN</span>
+                <strong>{room.time_limit_seconds}s</strong>
+                <small>Mỗi câu hỏi</small>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={styles.overviewCard}>
+                <span>TIẾN ĐỘ LỚP</span>
+                <strong>{hostMetrics.progress}%</strong>
+                <small>{hostMetrics.answered}/{snapshot.players.length * room.question_count} lượt đã làm</small>
+              </div>
+              <div className={styles.overviewCard}>
+                <span>ĐỘ CHÍNH XÁC</span>
+                <strong>{hostMetrics.answered > 0 ? `${hostMetrics.accuracy}%` : "—"}</strong>
+                <small>{hostMetrics.correct} đúng · {hostMetrics.wrong} sai</small>
+              </div>
+              <div className={styles.overviewCard}>
+                <span>TRẠNG THÁI CÂU NÀY</span>
+                <strong>
+                  {room.status === "countdown"
+                    ? "3, 2, 1"
+                    : room.status === "finished"
+                      ? "Xong"
+                      : hostMetrics.waitingCurrent}
+                </strong>
+                <small>
+                  {room.status === "countdown"
+                    ? "Đang chuẩn bị"
+                    : room.status === "finished"
+                      ? "Tất cả đã hoàn thành"
+                      : "Học sinh chưa trả lời"}
+                </small>
+              </div>
+              <div className={[styles.overviewCard, hostMetrics.needsSupport > 0 ? styles.overviewAlert : ""].filter(Boolean).join(" ")}>
+                <span>CẦN THEO DÕI</span>
+                <strong>{hostMetrics.needsSupport}</strong>
+                <small>Độ chính xác dưới 50% sau ≥ 2 câu</small>
+              </div>
+            </>
+          )}
+        </section>
         <div className={styles.hostGrid}>
           <section className={styles.stage}>{renderStage()}</section>
           <aside className={styles.sidePanel}>
@@ -281,19 +367,74 @@ export default function HostPage() {
                 <div className={styles.linkRow}><input readOnly value={playerLink} /><button onClick={copyLink}>{copied ? "Đã chép" : "Sao chép"}</button></div>
               </div>
             )}
-            <span className={styles.eyebrow}>NGƯỜI CHƠI</span>
+            <span className={styles.eyebrow}>THEO DÕI HỌC SINH</span>
             <h2>{snapshot.players.length}/{room.max_players} học sinh</h2>
             <div className={styles.playerList}>
               {Array.from({ length: room.max_players }, (_, index) => {
                 const player = snapshot.players[index];
-                return player ? (
-                  <div className={`${styles.playerCard} ${player.is_ready ? styles.ready : ""} ${player.answered ? styles.answered : ""}`} key={player.id}>
-                    <i>{player.name[0].toUpperCase()}</i>
-                    <div><strong>{player.name}</strong><br /><small>{room.status === "waiting" ? player.is_ready ? "Sẵn sàng" : "Chưa sẵn sàng" : `${player.score.toLocaleString("vi-VN")} điểm`}</small></div>
-                    <span>{room.status === "waiting" ? player.is_ready ? "✓" : "·" : player.answered ? "✓" : "·"}</span>
-                  </div>
-                ) : (
-                  <div className={`${styles.playerCard} ${styles.emptyPlayer}`} key={index}><i>?</i><strong>Đang chờ…</strong><span>·</span></div>
+                if (!player) {
+                  return (
+                    <div className={`${styles.playerCard} ${styles.emptyPlayer}`} key={index}><i>?</i><strong>Đang chờ…</strong><span>·</span></div>
+                  );
+                }
+
+                if (room.status === "waiting" || room.status === "countdown") {
+                  return (
+                    <div className={`${styles.playerCard} ${player.is_ready ? styles.ready : ""}`} key={player.id}>
+                      <i>{player.name[0].toUpperCase()}</i>
+                      <div>
+                        <strong>{player.name}</strong><br />
+                        <small>{room.status === "countdown" ? "Đang chuẩn bị" : player.is_ready ? "Sẵn sàng" : "Chưa sẵn sàng"}</small>
+                      </div>
+                      <span>{room.status === "countdown" ? "3" : player.is_ready ? "✓" : "·"}</span>
+                    </div>
+                  );
+                }
+
+                const stat = snapshot.stats.find((item) => item.player_id === player.id);
+                const answeredCount = stat?.answered_count ?? 0;
+                const correctCount = stat?.correct_count ?? 0;
+                const wrongCount = answeredCount - correctCount;
+                const remainingCount = Math.max(room.question_count - answeredCount, 0);
+                const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+                const needsSupport = answeredCount >= 2 && accuracy < 50;
+                const statusLabel = room.status === "finished"
+                  ? "Hoàn thành"
+                  : room.status === "reveal"
+                    ? player.answered ? "Đã trả lời" : "Bỏ trống"
+                    : player.answered ? "Đã trả lời" : "Đang làm";
+
+                return (
+                  <article
+                    className={[
+                      styles.playerMonitorCard,
+                      player.answered || room.status === "finished" ? styles.currentAnswered : "",
+                      needsSupport ? styles.needsSupport : "",
+                    ].filter(Boolean).join(" ")}
+                    key={player.id}
+                  >
+                    <div className={styles.monitorHeader}>
+                      <i className={styles.monitorAvatar}>{player.name[0].toUpperCase()}</i>
+                      <div className={styles.monitorIdentity}>
+                        <strong>#{index + 1} · {player.name}</strong>
+                        <small>{(stat?.score ?? player.score).toLocaleString("vi-VN")} điểm</small>
+                      </div>
+                      <span className={styles.monitorStatus}>{statusLabel}</span>
+                    </div>
+                    <div className={styles.monitorProgress} aria-label={`${answeredCount} trên ${room.question_count} câu đã làm`}>
+                      <i style={{ width: String((answeredCount / room.question_count) * 100) + "%" }} />
+                    </div>
+                    <div className={styles.monitorStats}>
+                      <div><span>ĐÚNG</span><strong>{correctCount}</strong></div>
+                      <div><span>SAI</span><strong>{wrongCount}</strong></div>
+                      <div><span>CÒN</span><strong>{remainingCount}</strong></div>
+                    </div>
+                    <div className={styles.monitorFooter}>
+                      <span>Chính xác <b>{answeredCount > 0 ? `${accuracy}%` : "—"}</b></span>
+                      <span>Tốc độ TB <b>{answeredCount > 0 && stat ? formatResponseTime(stat.average_response_ms) : "—"}</b></span>
+                    </div>
+                    {needsSupport && <small className={styles.supportWarning}>Cần theo dõi · độ chính xác dưới 50%</small>}
+                  </article>
                 );
               })}
             </div>
