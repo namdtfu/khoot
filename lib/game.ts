@@ -52,12 +52,30 @@ export type GameStat = {
   average_response_ms: number;
 };
 
+export type GameHistoryAnswer = {
+  player_id: string;
+  selected_option: number;
+  is_correct: boolean;
+  response_ms: number;
+  points: number;
+};
+
+export type GameHistoryQuestion = {
+  id: string;
+  position: number;
+  prompt: string;
+  options: string[];
+  correct_option: number;
+  answers: GameHistoryAnswer[];
+};
+
 export type GameSnapshot = {
   room: GameRoom;
   players: GamePlayer[];
   question: GameQuestion | null;
   self: GameSelf | null;
   stats: GameStat[];
+  history?: GameHistoryQuestion[];
 };
 
 export type GameLobby = {

@@ -440,6 +440,83 @@ export default function HostPage() {
             </div>
           </aside>
         </div>
+        {room.status === "finished" && Boolean(snapshot.history?.length) && (
+          <section className={styles.historyPanel} aria-labelledby="answer-history-title">
+            <div className={styles.historyHeading}>
+              <div>
+                <span className={styles.eyebrow}>CHI TIẾT TỪNG CÂU</span>
+                <h2 id="answer-history-title">Lịch sử trả lời của học sinh</h2>
+                <p>Mỗi hàng là một câu hỏi. Cuộn ngang để xem toàn bộ học sinh.</p>
+              </div>
+              <div className={styles.historyLegend} aria-label="Chú thích kết quả">
+                <span className={styles.legendCorrect}>✓ Đúng</span>
+                <span className={styles.legendWrong}>✕ Sai</span>
+                <span className={styles.legendEmpty}>— Bỏ trống</span>
+              </div>
+            </div>
+            <div className={styles.historyTableWrap}>
+              <table className={styles.historyTable}>
+                <thead>
+                  <tr>
+                    <th className={styles.historyQuestionColumn} scope="col">CÂU HỎI</th>
+                    {snapshot.stats.map((stat, index) => (
+                      <th className={styles.historyPlayerColumn} scope="col" key={stat.player_id}>
+                        <small>HẠNG {index + 1}</small>
+                        <strong>{stat.name}</strong>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {snapshot.history?.map((historyQuestion) => {
+                    const answersByPlayer = new Map(
+                      historyQuestion.answers.map((answer) => [answer.player_id, answer]),
+                    );
+                    const correctLetter = String.fromCharCode(65 + historyQuestion.correct_option);
+
+                    return (
+                      <tr key={historyQuestion.id}>
+                        <th className={styles.historyQuestionCell} scope="row">
+                          <span>CÂU {historyQuestion.position + 1}</span>
+                          <strong>{historyQuestion.prompt}</strong>
+                          <small>
+                            Đáp án đúng: {correctLetter}. {historyQuestion.options[historyQuestion.correct_option]}
+                          </small>
+                        </th>
+                        {snapshot.stats.map((stat) => {
+                          const answer = answersByPlayer.get(stat.player_id);
+                          if (!answer) {
+                            return (
+                              <td className={styles.historyEmpty} key={stat.player_id}>
+                                <b>—</b>
+                                <strong>Bỏ trống</strong>
+                                <small>Không có câu trả lời</small>
+                              </td>
+                            );
+                          }
+
+                          const selectedLetter = String.fromCharCode(65 + answer.selected_option);
+                          return (
+                            <td
+                              className={answer.is_correct ? styles.historyCorrect : styles.historyWrong}
+                              key={stat.player_id}
+                            >
+                              <b>{answer.is_correct ? "✓" : "✕"}</b>
+                              <strong>{selectedLetter}. {historyQuestion.options[answer.selected_option]}</strong>
+                              <small>
+                                {answer.is_correct ? "Trả lời đúng" : "Trả lời sai"} · {formatResponseTime(answer.response_ms)}
+                              </small>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
