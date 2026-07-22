@@ -6,6 +6,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { getBasePath, getErrorMessage, type GameSnapshot } from "@/lib/game";
 import { parseQuestionText } from "@/lib/question-import";
+import QuestionTree, { type TreeFolder, type TreeQuestionSet } from "./QuestionTree";
 import styles from "./admin.module.css";
 
 type QuestionSet = {
@@ -16,6 +17,14 @@ type QuestionSet = {
   description: string;
   is_published: boolean;
   time_limit_seconds: number;
+  folder_id: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type QuestionFolder = TreeFolder & {
+  owner_id: string;
   created_at: string;
   updated_at: string;
 };
@@ -49,13 +58,41 @@ C. Cảm ơn
 D. Làm ơn
 Đáp án: B`;
 
+function folderPath(folderId: string | null, folders: QuestionFolder[]) {
+  if (!folderId) return "Gốc";
+  const byId = new Map(folders.map((folder) => [folder.id, folder]));
+  const parts: string[] = [];
+  const visited = new Set<string>();
+  let current = byId.get(folderId);
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    parts.unshift(current.name);
+    current = current.parent_id ? byId.get(current.parent_id) : undefined;
+  }
+  return parts.join(" / ") || "Gốc";
+}
+
+function isFolderInside(folderId: string, ancestorId: string, folders: QuestionFolder[]) {
+  const byId = new Map(folders.map((folder) => [folder.id, folder]));
+  const visited = new Set<string>();
+  let current = byId.get(folderId);
+  while (current && !visited.has(current.id)) {
+    if (current.id === ancestorId) return true;
+    visited.add(current.id);
+    current = current.parent_id ? byId.get(current.parent_id) : undefined;
+  }
+  return false;
+}
+
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [folders, setFolders] = useState<QuestionFolder[]>([]);
   const [sets, setSets] = useState<QuestionSet[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [packForm, setPackForm] = useState({ title: "", topic: "", description: "", is_published: false, time_limit_seconds: 20 });
   const [roomSize, setRoomSize] = useState(5);
@@ -64,15 +101,29 @@ export default function AdminPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
-  const [importForm, setImportForm] = useState({ title: "Bộ đề nhập nhanh", topic: "Tổng hợp", time_limit_seconds: 20 });
+  const [importForm, setImportForm] = useState({ title: "Bộ đề nhập nhanh", topic: "Tổng hợp", time_limit_seconds: 20, folder_id: null as string | null });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const selectedSet = useMemo(() => sets.find((item) => item.id === selectedId) ?? null, [sets, selectedId]);
+  const selectedFolder = useMemo(() => folders.find((item) => item.id === selectedFolderId) ?? null, [folders, selectedFolderId]);
   const importPreview = useMemo(() => parseQuestionText(importText), [importText]);
+  const activeFolderId = selectedFolder?.id ?? selectedSet?.folder_id ?? null;
+  const folderChoices = useMemo(() => [
+    { id: null as string | null, label: "Gốc" },
+    ...folders
+      .map((folder) => ({ id: folder.id, label: folderPath(folder.id, folders) }))
+      .sort((left, right) => left.label.localeCompare(right.label, "vi")),
+  ], [folders]);
+  const parentFolderChoices = useMemo(
+    () => selectedFolder
+      ? folderChoices.filter((choice) => !choice.id || !isFolderInside(choice.id, selectedFolder.id, folders))
+      : folderChoices,
+    [folderChoices, folders, selectedFolder],
+  );
 
   const showError = (error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
-    const schemaMissing = message.includes("question_sets") || message.includes("schema cache");
+    const schemaMissing = message.includes("question_sets") || message.includes("question_folders") || message.includes("schema cache");
     setNotice({
       type: "error",
       text: schemaMissing
@@ -81,16 +132,29 @@ export default function AdminPage() {
     });
   };
 
-  const loadSets = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from("question_sets")
-      .select("*")
-      .eq("owner_id", userId)
-      .order("updated_at", { ascending: false });
-    if (error) throw error;
-    const nextSets = (data ?? []) as QuestionSet[];
+  const loadLibrary = useCallback(async (userId: string) => {
+    const [setResult, folderResult] = await Promise.all([
+      supabase
+        .from("question_sets")
+        .select("*")
+        .eq("owner_id", userId)
+        .order("position")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("question_folders")
+        .select("*")
+        .eq("owner_id", userId)
+        .order("position")
+        .order("name"),
+    ]);
+    if (setResult.error) throw setResult.error;
+    if (folderResult.error) throw folderResult.error;
+    const nextSets = (setResult.data ?? []) as QuestionSet[];
+    const nextFolders = (folderResult.data ?? []) as QuestionFolder[];
     setSets(nextSets);
-    setSelectedId((current) => current && nextSets.some((item) => item.id === current) ? current : nextSets[0]?.id ?? null);
+    setFolders(nextFolders);
+    setSelectedId((current) => current && nextSets.some((item) => item.id === current) ? current : null);
+    setSelectedFolderId((current) => current && nextFolders.some((item) => item.id === current) ? current : null);
   }, []);
 
   const loadQuestions = useCallback(async (setId: string) => {
@@ -117,11 +181,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     const sessionTimer = window.setTimeout(() => {
-      if (!session) { setSets([]); setSelectedId(null); return; }
-      loadSets(session.user.id).catch(showError);
+      if (!session) { setFolders([]); setSets([]); setSelectedId(null); setSelectedFolderId(null); return; }
+      loadLibrary(session.user.id).catch(showError);
     }, 0);
     return () => window.clearTimeout(sessionTimer);
-  }, [session, loadSets]);
+  }, [session, loadLibrary]);
 
   useEffect(() => {
     const selectionTimer = window.setTimeout(() => {
@@ -152,19 +216,139 @@ export default function AdminPage() {
 
   const createSet = async () => {
     if (!session) return;
+    const destinationFolderId = activeFolderId;
+    const position = Math.max(
+      -1,
+      ...sets.filter((item) => item.folder_id === destinationFolderId).map((item) => item.position),
+    ) + 1;
     setBusy(true); setNotice(null);
     try {
       const { data, error } = await supabase
         .from("question_sets")
-        .insert({ owner_id: session.user.id, title: "Bộ đề mới", topic: "Tổng hợp" })
+        .insert({
+          owner_id: session.user.id,
+          title: "Bộ đề mới",
+          topic: "Tổng hợp",
+          folder_id: destinationFolderId,
+          position,
+        })
         .select()
         .single();
       if (error) throw error;
-      setSets((current) => [data as QuestionSet, ...current]);
+      setSets((current) => [...current, data as QuestionSet]);
       setSelectedId(data.id);
+      setSelectedFolderId(null);
       setNotice({ type: "success", text: "Đã tạo bộ đề mới." });
     } catch (error) { showError(error); }
     finally { setBusy(false); }
+  };
+
+  const createFolder = async (parentId: string | null = activeFolderId) => {
+    if (!session) return;
+    const name = window.prompt("Tên thư mục mới:");
+    if (!name?.trim()) return;
+    const position = Math.max(
+      -1,
+      ...folders.filter((item) => item.parent_id === parentId).map((item) => item.position),
+    ) + 1;
+    setBusy(true); setNotice(null);
+    try {
+      const { data, error } = await supabase
+        .from("question_folders")
+        .insert({ owner_id: session.user.id, parent_id: parentId, name: name.trim(), position })
+        .select()
+        .single();
+      if (error) throw error;
+      const folder = data as QuestionFolder;
+      setFolders((current) => [...current, folder]);
+      setSelectedFolderId(folder.id);
+      setSelectedId(null);
+      setImportOpen(false);
+      setNotice({ type: "success", text: `Đã tạo thư mục “${folder.name}”.` });
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const renameFolder = async () => {
+    if (!selectedFolder) return;
+    const name = window.prompt("Tên mới của thư mục:", selectedFolder.name);
+    if (!name?.trim() || name.trim() === selectedFolder.name) return;
+    setBusy(true); setNotice(null);
+    try {
+      const { data, error } = await supabase
+        .from("question_folders")
+        .update({ name: name.trim() })
+        .eq("id", selectedFolder.id)
+        .select()
+        .single();
+      if (error) throw error;
+      setFolders((current) => current.map((item) => item.id === selectedFolder.id ? data as QuestionFolder : item));
+      setNotice({ type: "success", text: "Đã đổi tên thư mục." });
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const deleteFolder = async () => {
+    if (!selectedFolder) return;
+    const childCount = folders.filter((item) => item.parent_id === selectedFolder.id).length;
+    const setCount = sets.filter((item) => item.folder_id === selectedFolder.id).length;
+    if (childCount || setCount) {
+      setNotice({ type: "error", text: "Chỉ có thể xóa thư mục trống. Hãy chuyển các thư mục con và bộ đề ra nơi khác trước." });
+      return;
+    }
+    if (!window.confirm(`Xóa thư mục trống “${selectedFolder.name}”?`)) return;
+    setBusy(true); setNotice(null);
+    try {
+      const { error } = await supabase.from("question_folders").delete().eq("id", selectedFolder.id);
+      if (error) throw error;
+      setFolders((current) => current.filter((item) => item.id !== selectedFolder.id));
+      setSelectedFolderId(selectedFolder.parent_id);
+      setNotice({ type: "success", text: "Đã xóa thư mục." });
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const moveQuestionSet = async (setId: string, folderId: string | null, position: number) => {
+    if (!session) return;
+    setBusy(true); setNotice(null);
+    try {
+      const { error } = await supabase.rpc("move_question_set", {
+        p_set_id: setId,
+        p_folder_id: folderId,
+        p_position: position,
+      });
+      if (error) throw error;
+      await loadLibrary(session.user.id);
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const moveQuestionFolder = async (folderId: string, parentId: string | null, position: number) => {
+    if (!session) return;
+    setBusy(true); setNotice(null);
+    try {
+      const { error } = await supabase.rpc("move_question_folder", {
+        p_folder_id: folderId,
+        p_parent_id: parentId,
+        p_position: position,
+      });
+      if (error) throw error;
+      await loadLibrary(session.user.id);
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const selectFolder = (folderId: string) => {
+    setSelectedFolderId(folderId);
+    setSelectedId(null);
+    setImportOpen(false);
+    setEditorOpen(false);
+  };
+
+  const selectSet = (setId: string) => {
+    setSelectedId(setId);
+    setSelectedFolderId(null);
+    setImportOpen(false);
   };
 
   const saveSet = async (event: FormEvent) => {
@@ -222,7 +406,12 @@ export default function AdminPage() {
   };
 
   const openImporter = () => {
-    setImportForm({ title: `Bộ đề nhập nhanh ${sets.length + 1}`, topic: "Tổng hợp", time_limit_seconds: 20 });
+    setImportForm({
+      title: `Bộ đề nhập nhanh ${sets.length + 1}`,
+      topic: "Tổng hợp",
+      time_limit_seconds: 20,
+      folder_id: activeFolderId,
+    });
     setImportText("");
     setEditorOpen(false);
     setImportOpen(true);
@@ -237,6 +426,10 @@ export default function AdminPage() {
     setBusy(true);
     setNotice(null);
     let createdSetId: string | null = null;
+    const setPosition = Math.max(
+      -1,
+      ...sets.filter((item) => item.folder_id === importForm.folder_id).map((item) => item.position),
+    ) + 1;
 
     try {
       const { data, error } = await supabase
@@ -248,6 +441,8 @@ export default function AdminPage() {
           description: "Bộ đề được nhập nhanh từ văn bản.",
           is_published: false,
           time_limit_seconds: importForm.time_limit_seconds,
+          folder_id: importForm.folder_id,
+          position: setPosition,
         })
         .select()
         .single();
@@ -270,6 +465,7 @@ export default function AdminPage() {
 
       setSets((current) => [createdSet, ...current]);
       setSelectedId(createdSet.id);
+      setSelectedFolderId(null);
       setImportOpen(false);
       setImportText("");
       setNotice({ type: "success", text: `Đã tạo “${createdSet.title}” với ${questionRows.length} câu hỏi.` });
@@ -391,21 +587,25 @@ export default function AdminPage() {
       <div className={styles.workspace}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeading}>
-            <div><span>BỘ ĐỀ CỦA BẠN</span><strong>{sets.length} bộ đề</strong></div>
-            <button onClick={createSet} disabled={busy} aria-label="Tạo bộ đề mới">+</button>
+            <div><span>THƯ VIỆN CỦA BẠN</span><strong>{folders.length} thư mục · {sets.length} bộ đề</strong></div>
+            <div className={styles.sidebarActions}>
+              <button onClick={() => createFolder()} disabled={busy} aria-label="Tạo thư mục mới" title="Tạo thư mục">▱＋</button>
+              <button onClick={createSet} disabled={busy} aria-label="Tạo bộ đề mới" title="Tạo bộ đề">＋</button>
+            </div>
           </div>
           <button className={styles.importLauncher} onClick={openImporter} disabled={busy}>↓ Nhập từ văn bản</button>
-          <div className={styles.setList}>
-            {sets.map((item) => (
-              <button key={item.id} className={item.id === selectedId ? styles.activeSet : ""} onClick={() => setSelectedId(item.id)}>
-                <span className={styles.setIcon}>{item.topic.slice(0, 1).toUpperCase()}</span>
-                <span><strong>{item.title}</strong><small>{item.topic}</small></span>
-                <i className={item.is_published ? styles.publishedDot : ""} />
-              </button>
-            ))}
-            {!sets.length && <div className={styles.emptySets}><span>✦</span><p>Chưa có bộ đề nào.</p><button onClick={createSet}>Tạo bộ đề đầu tiên</button></div>}
-          </div>
-          <div className={styles.sidebarHelp}><span>GỢI Ý</span><p>Mỗi câu hỏi luôn có đúng 4 lựa chọn và 1 đáp án chính xác.</p></div>
+          <QuestionTree
+            folders={folders}
+            sets={sets as TreeQuestionSet[]}
+            selectedFolderId={selectedFolderId}
+            selectedSetId={selectedId}
+            busy={busy}
+            onSelectFolder={selectFolder}
+            onSelectSet={selectSet}
+            onMoveFolder={moveQuestionFolder}
+            onMoveSet={moveQuestionSet}
+          />
+          <div className={styles.sidebarHelp}><span>GỢI Ý</span><p>Kéo bộ đề hoặc thư mục để chuyển vị trí. Hai nút ↑ ↓ dùng để sắp xếp trong cùng một thư mục.</p></div>
         </aside>
         <section className={styles.content}>
           {notice && <div className={notice.type === "error" ? styles.errorBanner : styles.successBanner}>{notice.text}<button onClick={() => setNotice(null)}>×</button></div>}
@@ -425,6 +625,11 @@ export default function AdminPage() {
                 </label>
                 <label>Thời gian mỗi câu
                   <input type="number" min={5} max={120} value={importForm.time_limit_seconds} onChange={(event) => setImportForm({ ...importForm, time_limit_seconds: Number(event.target.value) })} required />
+                </label>
+                <label>Thư mục lưu
+                  <select value={importForm.folder_id ?? ""} onChange={(event) => setImportForm({ ...importForm, folder_id: event.target.value || null })}>
+                    {folderChoices.map((choice) => <option key={choice.id ?? "root"} value={choice.id ?? ""}>{choice.label}</option>)}
+                  </select>
                 </label>
               </div>
               <div className={styles.importGuide}>
@@ -483,13 +688,53 @@ export default function AdminPage() {
                 </div>
               </div>
             </form>
+          ) : selectedFolder ? (
+            <div className={styles.folderPanel}>
+              <span className={styles.breadcrumb}>THƯ MỤC / {folderPath(selectedFolder.parent_id, folders).toUpperCase()}</span>
+              <div className={styles.folderPanelTitle}>
+                <div><span className={styles.largeFolderIcon}>▱</span><div><h1>{selectedFolder.name}</h1><p>{folders.filter((item) => item.parent_id === selectedFolder.id).length} thư mục con · {sets.filter((item) => item.folder_id === selectedFolder.id).length} bộ đề</p></div></div>
+                <div className={styles.folderActions}>
+                  <button type="button" onClick={() => createFolder(selectedFolder.id)} disabled={busy}>＋ Thư mục con</button>
+                  <button className={styles.saveButton} type="button" onClick={createSet} disabled={busy}>＋ Bộ đề</button>
+                </div>
+              </div>
+              <div className={styles.folderSettings}>
+                <label>Thư mục cha
+                  <select
+                    value={selectedFolder.parent_id ?? ""}
+                    disabled={busy}
+                    onChange={(event) => {
+                      const parentId = event.target.value || null;
+                      const position = folders.filter((item) => item.parent_id === parentId && item.id !== selectedFolder.id).length;
+                      void moveQuestionFolder(selectedFolder.id, parentId, position);
+                    }}
+                  >
+                    {parentFolderChoices.map((choice) => <option key={choice.id ?? "root"} value={choice.id ?? ""}>{choice.label}</option>)}
+                  </select>
+                  <small>Chọn một thư mục khác để di chuyển toàn bộ nhánh này.</small>
+                </label>
+                <div className={styles.folderManageButtons}>
+                  <button type="button" onClick={renameFolder} disabled={busy}>Đổi tên</button>
+                  <button className={styles.deleteButton} type="button" onClick={deleteFolder} disabled={busy}>Xóa thư mục</button>
+                </div>
+              </div>
+              <div className={styles.folderDropHint}><b>Kéo và thả</b><span>Thả bộ đề hoặc thư mục vào tên thư mục bên trái để chuyển chúng vào đây.</span></div>
+            </div>
           ) : !selectedSet ? (
-            <div className={styles.noSelection}><span>＋</span><h2>Tạo bộ đề đầu tiên</h2><p>Bắt đầu từ một chủ đề bất kỳ rồi thêm các câu hỏi trắc nghiệm.</p><button onClick={createSet}>Tạo bộ đề mới</button></div>
+            <div className={styles.noSelection}>
+              <span>▱</span>
+              <h2>Sắp xếp thư viện bộ đề</h2>
+              <p>Tạo thư mục, thư mục con hoặc chọn một bộ đề trong cây bên trái.</p>
+              <div className={styles.noSelectionActions}>
+                <button onClick={() => createFolder(null)}>＋ Tạo thư mục</button>
+                <button onClick={createSet}>＋ Tạo bộ đề</button>
+              </div>
+            </div>
           ) : (
             <>
               <div className={styles.contentTop}>
                 <div>
-                  <span className={styles.breadcrumb}>BỘ ĐỀ / {selectedSet.topic.toUpperCase()}</span>
+                  <span className={styles.breadcrumb}>BỘ ĐỀ / {folderPath(selectedSet.folder_id, folders).toUpperCase()}</span>
                   <h1>{selectedSet.title}</h1>
                   <p>{questions.length} câu hỏi · {selectedSet.is_published ? "Đang xuất bản" : "Bản nháp"}</p>
                 </div>
@@ -542,6 +787,20 @@ export default function AdminPage() {
                       required
                     />
                     <small>Từ 5 đến 120 giây.</small>
+                  </label>
+                  <label>Thư mục
+                    <select
+                      value={selectedSet.folder_id ?? ""}
+                      disabled={busy}
+                      onChange={(event) => {
+                        const folderId = event.target.value || null;
+                        const position = sets.filter((item) => item.folder_id === folderId && item.id !== selectedSet.id).length;
+                        void moveQuestionSet(selectedSet.id, folderId, position);
+                      }}
+                    >
+                      {folderChoices.map((choice) => <option key={choice.id ?? "root"} value={choice.id ?? ""}>{choice.label}</option>)}
+                    </select>
+                    <small>Đổi thư mục đích của bộ đề.</small>
                   </label>
                   <label className={styles.fullField}>Mô tả
                     <textarea value={packForm.description} onChange={(event) => setPackForm({ ...packForm, description: event.target.value })} rows={2} placeholder="Mô tả ngắn để dễ nhận biết bộ đề" />

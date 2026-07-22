@@ -7,6 +7,8 @@ Khoot Mini là trò chơi trắc nghiệm realtime cho số lượng học sinh 
 - Đăng nhập và đăng xuất bằng tài khoản quản trị được tạo trực tiếp trong Supabase.
 - Mỗi tài khoản chỉ quản lý dữ liệu của chính mình nhờ chính sách bảo mật theo từng hàng.
 - Tạo, sửa, xóa và xuất bản bộ đề thuộc bất kỳ lĩnh vực nào.
+- Sắp xếp bộ đề trong cây thư mục nhiều cấp; hỗ trợ kéo/thả, đổi thư mục đích và thay đổi thứ tự.
+- Nhập nhanh cả bộ đề từ danh sách câu hỏi dạng văn bản.
 - Mỗi câu hỏi gồm nội dung hoặc định nghĩa, đúng 4 lựa chọn và 1 đáp án chính xác.
 - Người quản trị nhập số học sinh, mở phòng và gửi liên kết riêng.
 - Học sinh nhập tên, bấm sẵn sàng và trả lời đồng thời trên các máy khác nhau.
