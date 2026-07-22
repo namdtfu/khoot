@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { getBasePath, getErrorMessage, type GameSnapshot } from "@/lib/game";
 import styles from "./admin.module.css";
 
 type QuestionSet = {
@@ -13,6 +14,7 @@ type QuestionSet = {
   topic: string;
   description: string;
   is_published: boolean;
+  time_limit_seconds: number;
   created_at: string;
   updated_at: string;
 };
@@ -40,7 +42,7 @@ export default function AdminPage() {
   const [sets, setSets] = useState<QuestionSet[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [packForm, setPackForm] = useState({ title: "", topic: "", description: "", is_published: false });
+  const [packForm, setPackForm] = useState({ title: "", topic: "", description: "", is_published: false, time_limit_seconds: 20 });
   const [questionForm, setQuestionForm] = useState({ ...EMPTY_QUESTION });
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -94,20 +96,27 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (!session) { setSets([]); setSelectedId(null); return; }
-    loadSets(session.user.id).catch(showError);
+    const sessionTimer = window.setTimeout(() => {
+      if (!session) { setSets([]); setSelectedId(null); return; }
+      loadSets(session.user.id).catch(showError);
+    }, 0);
+    return () => window.clearTimeout(sessionTimer);
   }, [session, loadSets]);
 
   useEffect(() => {
-    if (!selectedSet) { setQuestions([]); return; }
-    setPackForm({
-      title: selectedSet.title,
-      topic: selectedSet.topic,
-      description: selectedSet.description,
-      is_published: selectedSet.is_published,
-    });
-    setEditorOpen(false);
-    loadQuestions(selectedSet.id).catch(showError);
+    const selectionTimer = window.setTimeout(() => {
+      if (!selectedSet) { setQuestions([]); return; }
+      setPackForm({
+        title: selectedSet.title,
+        topic: selectedSet.topic,
+        description: selectedSet.description,
+        is_published: selectedSet.is_published,
+        time_limit_seconds: selectedSet.time_limit_seconds,
+      });
+      setEditorOpen(false);
+      loadQuestions(selectedSet.id).catch(showError);
+    }, 0);
+    return () => window.clearTimeout(selectionTimer);
   }, [selectedSet, loadQuestions]);
 
   const submitAuth = async (event: FormEvent) => {
@@ -166,6 +175,22 @@ export default function AdminPage() {
       setNotice({ type: "success", text: "Đã xóa bộ đề." });
     } catch (error) { showError(error); }
     finally { setBusy(false); }
+  };
+
+  const createGameRoom = async () => {
+    if (!selectedSet) return;
+    setBusy(true); setNotice(null);
+    try {
+      const { data, error } = await supabase.rpc("create_game", {
+        p_question_set_id: selectedSet.id,
+      });
+      if (error) throw error;
+      const snapshot = data as GameSnapshot;
+      window.location.assign(`${getBasePath()}/host/?room=${snapshot.room.id}`);
+    } catch (error) {
+      setNotice({ type: "error", text: getErrorMessage(error) });
+      setBusy(false);
+    }
   };
 
   const openNewQuestion = () => {
@@ -311,7 +336,17 @@ export default function AdminPage() {
                   <h1>{selectedSet.title}</h1>
                   <p>{questions.length} câu hỏi · {selectedSet.is_published ? "Đang xuất bản" : "Bản nháp"}</p>
                 </div>
-                <button className={styles.addQuestionButton} onClick={openNewQuestion}>＋ Thêm câu hỏi</button>
+                <div className={styles.topActions}>
+                  <button
+                    className={styles.openRoomButton}
+                    onClick={createGameRoom}
+                    disabled={busy || !selectedSet.is_published || questions.length === 0}
+                    title={!selectedSet.is_published ? "Hãy xuất bản bộ đề trước" : questions.length === 0 ? "Hãy thêm câu hỏi trước" : ""}
+                  >
+                    ▶ Mở phòng 5 người
+                  </button>
+                  <button className={styles.addQuestionButton} onClick={openNewQuestion}>＋ Thêm câu hỏi</button>
+                </div>
               </div>
 
               <form className={styles.packSettings} onSubmit={saveSet}>
@@ -328,6 +363,17 @@ export default function AdminPage() {
                   </label>
                   <label>Lĩnh vực
                     <input value={packForm.topic} onChange={(event) => setPackForm({ ...packForm, topic: event.target.value })} maxLength={80} placeholder="Tiếng Anh, Lịch sử, Khoa học…" required />
+                  </label>
+                  <label>Thời gian mỗi câu
+                    <input
+                      type="number"
+                      min={5}
+                      max={120}
+                      value={packForm.time_limit_seconds}
+                      onChange={(event) => setPackForm({ ...packForm, time_limit_seconds: Number(event.target.value) })}
+                      required
+                    />
+                    <small>Từ 5 đến 120 giây.</small>
                   </label>
                   <label className={styles.fullField}>Mô tả
                     <textarea value={packForm.description} onChange={(event) => setPackForm({ ...packForm, description: event.target.value })} rows={2} placeholder="Mô tả ngắn để dễ nhận biết bộ đề" />

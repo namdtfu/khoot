@@ -113,7 +113,7 @@ button { -webkit-tap-highlight-color: transparent; }
   box-shadow: 0 6px 0 #071612;
   transition: transform .18s ease, box-shadow .18s ease;
 }
-.primary-button { min-width: 185px; padding: 16px 19px; text-align: left; }
+.primary-button { display: inline-block; min-width: 185px; padding: 16px 19px; text-align: left; text-decoration: none; }
 .primary-button span { float: right; color: var(--yellow); font-size: 19px; }
 .primary-button:hover, .next-button:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #071612; }
 .primary-button:active, .next-button:active { transform: translateY(3px); box-shadow: 0 3px 0 #071612; }

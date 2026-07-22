@@ -1,6 +1,6 @@
 # Khoot Mini
 
-Khoot Mini là trò chơi trắc nghiệm dành cho nhóm 5 người, kèm trang quản trị bộ đề sử dụng Supabase Auth và PostgreSQL.
+Khoot Mini là trò chơi trắc nghiệm realtime cho 5 học sinh và 1 máy quản trị, sử dụng Supabase Auth, PostgreSQL và Realtime Broadcast.
 
 ## Tính năng
 
@@ -8,7 +8,11 @@ Khoot Mini là trò chơi trắc nghiệm dành cho nhóm 5 người, kèm trang
 - Mỗi tài khoản chỉ quản lý dữ liệu của chính mình nhờ chính sách bảo mật theo từng hàng.
 - Tạo, sửa, xóa và xuất bản bộ đề thuộc bất kỳ lĩnh vực nào.
 - Mỗi câu hỏi gồm nội dung hoặc định nghĩa, đúng 4 lựa chọn và 1 đáp án chính xác.
-- Chơi thử theo lượt với 5 người và bảng xếp hạng điểm.
+- Người quản trị mở phòng và gửi liên kết riêng cho 5 học sinh.
+- Học sinh nhập tên, bấm sẵn sàng và trả lời đồng thời trên 5 máy khác nhau.
+- Đếm ngược 3–2–1, giới hạn thời gian theo từng bộ đề và tự động chuyển câu.
+- Chấm điểm theo đáp án đúng và tốc độ trả lời.
+- Hiển thị bảng xếp hạng cùng thống kê số câu đúng và thời gian phản hồi trung bình.
 - Tự động triển khai lên GitHub Pages khi có thay đổi trên nhánh `main`.
 
 ## Chạy trên máy
@@ -36,7 +40,7 @@ supabase/migrations
 npx supabase db push --linked
 ```
 
-Migration tạo hai bảng `question_sets` và `questions`, chỉ mục, trigger cập nhật thời gian và chính sách truy cập theo chủ sở hữu.
+Migration tạo ngân hàng câu hỏi, phòng chơi, người chơi, bản chụp câu hỏi và câu trả lời. Các thao tác của học sinh đi qua hàm cơ sở dữ liệu có kiểm soát; đáp án đúng chỉ được trả về sau khi hết câu.
 
 ## Tạo bản phát hành
 

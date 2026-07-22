@@ -93,7 +93,7 @@
   border-color: var(--ink);
   box-shadow: 0 0 0 3px rgba(19,42,37,.08);
 }
-.submitButton, .saveButton, .addQuestionButton, .noSelection > button, .emptyQuestions button {
+.submitButton, .saveButton, .addQuestionButton, .openRoomButton, .noSelection > button, .emptyQuestions button {
   cursor: pointer;
   border: 0;
   border-radius: 7px;
@@ -103,7 +103,7 @@
   box-shadow: 0 4px 0 #071612;
 }
 .submitButton { margin-top: 5px; padding: 14px; }
-.submitButton:disabled, .saveButton:disabled, .addQuestionButton:disabled { cursor: wait; opacity: .6; }
+.submitButton:disabled, .saveButton:disabled, .addQuestionButton:disabled, .openRoomButton:disabled { cursor: not-allowed; opacity: .45; }
 .authCard > small { display: block; margin-top: 21px; color: #87938f; font-size: 10px; line-height: 1.5; text-align: center; }
 .errorNotice, .successNotice { margin: -4px 0; padding: 10px; border-radius: 6px; font-size: 11px; line-height: 1.5; }
 .errorNotice { background: #ffe5df; color: #9d3727; }
@@ -214,7 +214,9 @@
 .contentTop h1 { margin: 5px 0 3px; font-size: clamp(27px, 3vw, 38px); letter-spacing: -1.5px; }
 .contentTop p { margin: 0; color: #76847f; font-size: 11px; }
 .breadcrumb { color: var(--orange); }
+.topActions { display: flex; gap: 9px; }
 .addQuestionButton { padding: 13px 16px; }
+.openRoomButton { padding: 13px 16px; background: var(--orange); box-shadow: 0 4px 0 #c94e25; }
 .packSettings, .questionEditor, .questionSection {
   margin-bottom: 20px;
   padding: 23px;
@@ -232,6 +234,7 @@
 .packGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .fullField { grid-column: 1 / -1; }
 .packSettings textarea, .questionEditor textarea { resize: vertical; }
+.packSettings label > small { color: #87938f; font-size: 9px; font-weight: 500; }
 .switchRow {
   display: flex !important;
   flex-direction: row !important;
@@ -351,6 +354,8 @@
   .contentTop { align-items: flex-end; gap: 12px; }
   .contentTop h1 { font-size: 25px; }
   .addQuestionButton { flex: 0 0 auto; font-size: 11px; }
+  .topActions { align-items: stretch; flex-direction: column; }
+  .openRoomButton, .addQuestionButton { padding: 10px 12px; }
   .packGrid, .optionsGrid { grid-template-columns: 1fr; }
   .questionCard { grid-template-columns: 35px 1fr; }
   .cardActions { grid-column: 2; }
