@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { getBasePath, getErrorMessage, type GameSnapshot } from "@/lib/game";
+import { parseQuestionText } from "@/lib/question-import";
 import styles from "./admin.module.css";
 
 type QuestionSet = {
@@ -34,6 +35,20 @@ const EMPTY_QUESTION = {
   correct_option: 0,
 };
 
+const IMPORT_EXAMPLE = `Câu 1: Từ “hello” có nghĩa là gì?
+A. Xin chào
+B. Tạm biệt
+C. Cảm ơn
+D. Xin lỗi
+Đáp án: A
+
+Câu 2: Từ “goodbye” có nghĩa là gì?
+A. Chào buổi sáng
+B. Tạm biệt
+C. Cảm ơn
+D. Làm ơn
+Đáp án: B`;
+
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -47,9 +62,13 @@ export default function AdminPage() {
   const [questionForm, setQuestionForm] = useState({ ...EMPTY_QUESTION });
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importForm, setImportForm] = useState({ title: "Bộ đề nhập nhanh", topic: "Tổng hợp", time_limit_seconds: 20 });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const selectedSet = useMemo(() => sets.find((item) => item.id === selectedId) ?? null, [sets, selectedId]);
+  const importPreview = useMemo(() => parseQuestionText(importText), [importText]);
 
   const showError = (error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
@@ -114,6 +133,7 @@ export default function AdminPage() {
         is_published: selectedSet.is_published,
         time_limit_seconds: selectedSet.time_limit_seconds,
       });
+      setImportOpen(false);
       setEditorOpen(false);
       loadQuestions(selectedSet.id).catch(showError);
     }, 0);
@@ -199,6 +219,66 @@ export default function AdminPage() {
     setEditingQuestionId(null);
     setQuestionForm({ prompt: "", options: ["", "", "", ""], correct_option: 0 });
     setEditorOpen(true);
+  };
+
+  const openImporter = () => {
+    setImportForm({ title: `Bộ đề nhập nhanh ${sets.length + 1}`, topic: "Tổng hợp", time_limit_seconds: 20 });
+    setImportText("");
+    setEditorOpen(false);
+    setImportOpen(true);
+    setNotice(null);
+  };
+
+  const importQuestionSet = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!session || importPreview.errors.length || !importPreview.questions.length) return;
+    if (!importForm.title.trim() || !importForm.topic.trim()) return;
+
+    setBusy(true);
+    setNotice(null);
+    let createdSetId: string | null = null;
+
+    try {
+      const { data, error } = await supabase
+        .from("question_sets")
+        .insert({
+          owner_id: session.user.id,
+          title: importForm.title.trim(),
+          topic: importForm.topic.trim(),
+          description: "Bộ đề được nhập nhanh từ văn bản.",
+          is_published: false,
+          time_limit_seconds: importForm.time_limit_seconds,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+
+      const createdSet = data as QuestionSet;
+      createdSetId = createdSet.id;
+      const questionRows = importPreview.questions.map((question, position) => ({
+        set_id: createdSet.id,
+        prompt: question.prompt,
+        options: question.options,
+        correct_option: question.correct_option,
+        position,
+      }));
+
+      for (let index = 0; index < questionRows.length; index += 100) {
+        const { error: questionError } = await supabase.from("questions").insert(questionRows.slice(index, index + 100));
+        if (questionError) throw questionError;
+      }
+
+      setSets((current) => [createdSet, ...current]);
+      setSelectedId(createdSet.id);
+      setImportOpen(false);
+      setImportText("");
+      setNotice({ type: "success", text: `Đã tạo “${createdSet.title}” với ${questionRows.length} câu hỏi.` });
+    } catch (error) {
+      if (createdSetId) await supabase.from("question_sets").delete().eq("id", createdSetId);
+      showError(error);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const openQuestion = (question: Question) => {
@@ -314,6 +394,7 @@ export default function AdminPage() {
             <div><span>BỘ ĐỀ CỦA BẠN</span><strong>{sets.length} bộ đề</strong></div>
             <button onClick={createSet} disabled={busy} aria-label="Tạo bộ đề mới">+</button>
           </div>
+          <button className={styles.importLauncher} onClick={openImporter} disabled={busy}>↓ Nhập từ văn bản</button>
           <div className={styles.setList}>
             {sets.map((item) => (
               <button key={item.id} className={item.id === selectedId ? styles.activeSet : ""} onClick={() => setSelectedId(item.id)}>
@@ -328,7 +409,81 @@ export default function AdminPage() {
         </aside>
         <section className={styles.content}>
           {notice && <div className={notice.type === "error" ? styles.errorBanner : styles.successBanner}>{notice.text}<button onClick={() => setNotice(null)}>×</button></div>}
-          {!selectedSet ? (
+          {importOpen ? (
+            <form className={styles.importPanel} onSubmit={importQuestionSet}>
+              <div className={styles.sectionTitle}>
+                <div><span>NHẬP NHANH</span><strong>Tạo bộ đề từ văn bản</strong></div>
+                <button className={styles.closeButton} type="button" onClick={() => setImportOpen(false)}>×</button>
+              </div>
+              <p className={styles.importIntro}>Dán toàn bộ danh sách vào ô bên dưới. Khoot sẽ tự nhận diện câu hỏi, bốn lựa chọn và đáp án đúng trước khi lưu.</p>
+              <div className={styles.importSettings}>
+                <label>Tên bộ đề
+                  <input value={importForm.title} onChange={(event) => setImportForm({ ...importForm, title: event.target.value })} maxLength={120} required />
+                </label>
+                <label>Lĩnh vực
+                  <input value={importForm.topic} onChange={(event) => setImportForm({ ...importForm, topic: event.target.value })} maxLength={80} required />
+                </label>
+                <label>Thời gian mỗi câu
+                  <input type="number" min={5} max={120} value={importForm.time_limit_seconds} onChange={(event) => setImportForm({ ...importForm, time_limit_seconds: Number(event.target.value) })} required />
+                </label>
+              </div>
+              <div className={styles.importGuide}>
+                <strong>Định dạng:</strong> Câu 1: … A. … B. … C. … D. … Đáp án: B
+                <span>Có thể viết liền trên một dòng hoặc xuống dòng. Bạn cũng có thể đặt dấu * trước lựa chọn đúng.</span>
+              </div>
+              <label className={styles.importTextLabel}>Danh sách câu hỏi
+                <textarea
+                  value={importText}
+                  onChange={(event) => setImportText(event.target.value)}
+                  rows={14}
+                  placeholder={IMPORT_EXAMPLE}
+                  spellCheck={false}
+                  autoFocus
+                  required
+                />
+              </label>
+              <div className={styles.importResult} aria-live="polite">
+                {!importText.trim() ? (
+                  <p>Dán nội dung để bắt đầu nhận diện.</p>
+                ) : (
+                  <>
+                    <div className={styles.importSummary}>
+                      <span className={styles.validCount}>✓ {importPreview.questions.length} câu hợp lệ</span>
+                      <span className={importPreview.errors.length ? styles.invalidCount : styles.noErrorCount}>
+                        {importPreview.errors.length ? `! ${importPreview.errors.length} câu cần sửa` : "Không có lỗi"}
+                      </span>
+                    </div>
+                    {importPreview.errors.length > 0 && (
+                      <ul className={styles.importErrors}>
+                        {importPreview.errors.slice(0, 6).map((error, index) => <li key={`${error.sourceLabel}-${index}`}><b>Câu {error.sourceLabel}:</b> {error.message}</li>)}
+                        {importPreview.errors.length > 6 && <li>Và {importPreview.errors.length - 6} lỗi khác…</li>}
+                      </ul>
+                    )}
+                    {importPreview.questions.length > 0 && (
+                      <div className={styles.importPreviewList}>
+                        {importPreview.questions.slice(0, 3).map((question, index) => (
+                          <article key={`${question.sourceLabel}-${index}`}>
+                            <b>{index + 1}. {question.prompt}</b>
+                            <span>Đáp án đúng: {String.fromCharCode(65 + question.correct_option)}. {question.options[question.correct_option]}</span>
+                          </article>
+                        ))}
+                        {importPreview.questions.length > 3 && <small>Và {importPreview.questions.length - 3} câu hợp lệ khác…</small>}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              <div className={styles.importFooter}>
+                <span>Bộ đề mới sẽ được lưu ở trạng thái bản nháp.</span>
+                <div>
+                  <button type="button" onClick={() => setImportOpen(false)}>Hủy</button>
+                  <button className={styles.saveButton} type="submit" disabled={busy || importPreview.errors.length > 0 || importPreview.questions.length === 0}>
+                    {busy ? "Đang nhập…" : `Tạo bộ đề (${importPreview.questions.length} câu)`}
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : !selectedSet ? (
             <div className={styles.noSelection}><span>＋</span><h2>Tạo bộ đề đầu tiên</h2><p>Bắt đầu từ một chủ đề bất kỳ rồi thêm các câu hỏi trắc nghiệm.</p><button onClick={createSet}>Tạo bộ đề mới</button></div>
           ) : (
             <>

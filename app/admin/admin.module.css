@@ -157,6 +157,19 @@
   font-weight: 700;
   box-shadow: 0 3px 0 #c94e25;
 }
+.importLauncher {
+  margin: 0 11px 11px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border: 1px dashed #cfc6b9;
+  border-radius: 8px;
+  background: #f7f1e7;
+  color: var(--ink);
+  font: 850 11px "Be Vietnam Pro", sans-serif;
+  text-align: left;
+}
+.importLauncher:hover { border-color: var(--orange); color: var(--orange); }
+.importLauncher:disabled { cursor: not-allowed; opacity: .45; }
 .setList { flex: 1; padding: 3px 11px; }
 .setList > button {
   display: grid;
@@ -209,7 +222,7 @@
 .errorBanner { background: #ffe1da; color: #8f3021; }
 .successBanner { background: #dff5ec; color: #146d52; }
 .errorBanner button, .successBanner button { cursor: pointer; border: 0; background: none; color: inherit; font-size: 17px; }
-.contentTop, .packSettings, .questionEditor, .questionSection, .noSelection { max-width: 1100px; margin-right: auto; margin-left: auto; }
+.contentTop, .packSettings, .questionEditor, .questionSection, .noSelection, .importPanel { max-width: 1100px; margin-right: auto; margin-left: auto; }
 .contentTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 23px; }
 .contentTop h1 { margin: 5px 0 3px; font-size: clamp(27px, 3vw, 38px); letter-spacing: -1.5px; }
 .contentTop p { margin: 0; color: #76847f; font-size: 11px; }
@@ -290,6 +303,65 @@
 .switchRow small { color: #85918d; font-size: 9px; font-weight: 500; }
 .questionEditor { border: 2px solid var(--ink); box-shadow: 7px 8px 0 rgba(19,42,37,.1); }
 .closeButton { width: 30px; height: 30px; font-size: 18px; }
+.importPanel {
+  padding: clamp(20px, 3vw, 32px);
+  border: 1px solid #d9d2c7;
+  border-radius: 12px;
+  background: var(--cream);
+}
+.importIntro { max-width: 720px; margin: -6px 0 20px; color: #6f7d78; font-size: 12px; line-height: 1.6; }
+.importSettings { display: grid; grid-template-columns: 1.3fr 1fr .7fr; gap: 12px; }
+.importSettings label, .importTextLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #64736e;
+  font-size: 11px;
+  font-weight: 850;
+}
+.importSettings input, .importTextLabel textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid #d8d1c6;
+  border-radius: 7px;
+  outline: none;
+  background: white;
+  color: var(--ink);
+  font: 500 14px "Be Vietnam Pro", system-ui, sans-serif;
+}
+.importSettings input:focus, .importTextLabel textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(19,42,37,.08); }
+.importGuide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  margin: 18px 0 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #eef8f4;
+  color: #1d725a;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.importGuide span { flex-basis: 100%; color: #53746a; }
+.importTextLabel textarea { min-height: 270px; resize: vertical; line-height: 1.65; }
+.importResult { margin-top: 14px; padding: 14px; border: 1px solid #e1dad0; border-radius: 9px; background: #faf7f0; }
+.importResult > p { margin: 0; color: #7a8783; font-size: 11px; }
+.importSummary { display: flex; flex-wrap: wrap; gap: 8px; }
+.importSummary span { padding: 6px 9px; border-radius: 6px; font-size: 10px; font-weight: 850; }
+.validCount, .noErrorCount { background: #dff5ec; color: #146d52; }
+.invalidCount { background: #ffe1da; color: #8f3021; }
+.importErrors { margin: 12px 0 0; padding-left: 19px; color: #9a3b2c; font-size: 10px; line-height: 1.7; }
+.importPreviewList { display: grid; gap: 7px; margin-top: 12px; }
+.importPreviewList article { display: flex; justify-content: space-between; gap: 15px; padding-top: 8px; border-top: 1px solid #e6dfd5; font-size: 10px; }
+.importPreviewList article b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.importPreviewList article span { flex: 0 0 auto; color: #167055; }
+.importPreviewList small { color: #7a8783; font-size: 9px; }
+.importFooter { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 18px; padding-top: 16px; border-top: 1px solid #e2dbd0; }
+.importFooter > span { color: #7b8984; font-size: 10px; }
+.importFooter > div { display: flex; gap: 8px; }
+.importFooter button { padding: 10px 13px; cursor: pointer; border: 1px solid #d1cabf; border-radius: 6px; background: transparent; color: var(--ink); font-size: 11px; font-weight: 800; }
+.importFooter .saveButton { border: 0; color: white; background: var(--ink); }
+.importFooter button:disabled { cursor: not-allowed; opacity: .45; }
 .optionsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .optionsGrid > label {
   gap: 6px;
@@ -365,7 +437,10 @@
   .setList { display: flex; gap: 7px; padding: 2px 15px 15px; overflow-x: auto; }
   .setList > button { flex: 0 0 200px; margin: 0; }
   .sidebarHelp { display: none; }
+  .importLauncher { margin-right: 15px; margin-left: 15px; }
   .content { padding: 22px 14px 45px; }
+  .importSettings { grid-template-columns: 1fr 1fr; }
+  .importSettings label:first-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 580px) {
@@ -379,6 +454,11 @@
   .roomSizeControl { justify-content: space-between; }
   .openRoomButton, .addQuestionButton { padding: 10px 12px; }
   .packGrid, .optionsGrid { grid-template-columns: 1fr; }
+  .importSettings { grid-template-columns: 1fr; }
+  .importSettings label:first-child { grid-column: auto; }
+  .importFooter { align-items: flex-start; flex-direction: column; }
+  .importPreviewList article { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .importPreviewList article b { max-width: 100%; }
   .questionCard { grid-template-columns: 35px 1fr; }
   .cardActions { grid-column: 2; }
   .editorFooter { align-items: flex-start; flex-direction: column; gap: 12px; }
