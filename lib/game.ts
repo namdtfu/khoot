@@ -8,6 +8,7 @@ export type GameRoom = {
   time_limit_seconds: number;
   current_question: number;
   question_count: number;
+  max_players: number;
   question_started_at: string | null;
   reveal_started_at: string | null;
   started_at: string | null;

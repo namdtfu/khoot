@@ -215,6 +215,27 @@
 .contentTop p { margin: 0; color: #76847f; font-size: 11px; }
 .breadcrumb { color: var(--orange); }
 .topActions { display: flex; gap: 9px; }
+.roomSizeControl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px 5px 11px;
+  border: 1px solid #d8d1c6;
+  border-radius: 7px;
+  background: var(--cream);
+}
+.roomSizeControl span { color: #71807b; font-size: 9px; font-weight: 850; white-space: nowrap; }
+.roomSizeControl input {
+  width: 64px;
+  padding: 7px 5px;
+  border: 1px solid #d8d1c6;
+  border-radius: 5px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
 .addQuestionButton { padding: 13px 16px; }
 .openRoomButton { padding: 13px 16px; background: var(--orange); box-shadow: 0 4px 0 #c94e25; }
 .packSettings, .questionEditor, .questionSection {
@@ -355,6 +376,7 @@
   .contentTop h1 { font-size: 25px; }
   .addQuestionButton { flex: 0 0 auto; font-size: 11px; }
   .topActions { align-items: stretch; flex-direction: column; }
+  .roomSizeControl { justify-content: space-between; }
   .openRoomButton, .addQuestionButton { padding: 10px 12px; }
   .packGrid, .optionsGrid { grid-template-columns: 1fr; }
   .questionCard { grid-template-columns: 35px 1fr; }

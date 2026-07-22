@@ -177,14 +177,14 @@ export default function PlayPage() {
       return (
         <div className={styles.waitingHero}>
           <div className={styles.avatar}>{self?.name[0].toUpperCase()}</div>
-          <span className={styles.eyebrow}>ĐÃ VÀO PHÒNG · {snapshot.players.length}/5 NGƯỜI</span>
+          <span className={styles.eyebrow}>ĐÃ VÀO PHÒNG · {snapshot.players.length}/{room.max_players} NGƯỜI</span>
           <h1>Chào {self?.name}!</h1>
           <p>{self?.is_ready ? "Em đã sẵn sàng. Hãy chờ các bạn nhé." : "Bấm nút bên dưới khi em đã sẵn sàng."}</p>
           <button className={`${styles.readyButton} ${self?.is_ready ? styles.active : ""}`} disabled={busy} onClick={toggleReady}>
             {self?.is_ready ? "✓ Đã sẵn sàng" : "Tôi đã sẵn sàng"}
           </button>
           <div className={styles.waitingPlayers}>
-            {[0, 1, 2, 3, 4].map((index) => {
+            {Array.from({ length: room.max_players }, (_, index) => {
               const player = snapshot.players[index];
               return <i className={player?.is_ready ? styles.ready : ""} key={player?.id ?? index}>{player ? player.name[0].toUpperCase() : "?"}</i>;
             })}

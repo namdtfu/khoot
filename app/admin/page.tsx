@@ -43,6 +43,7 @@ export default function AdminPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [packForm, setPackForm] = useState({ title: "", topic: "", description: "", is_published: false, time_limit_seconds: 20 });
+  const [roomSize, setRoomSize] = useState(5);
   const [questionForm, setQuestionForm] = useState({ ...EMPTY_QUESTION });
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -183,6 +184,7 @@ export default function AdminPage() {
     try {
       const { data, error } = await supabase.rpc("create_game", {
         p_question_set_id: selectedSet.id,
+        p_max_players: roomSize,
       });
       if (error) throw error;
       const snapshot = data as GameSnapshot;
@@ -337,13 +339,24 @@ export default function AdminPage() {
                   <p>{questions.length} câu hỏi · {selectedSet.is_published ? "Đang xuất bản" : "Bản nháp"}</p>
                 </div>
                 <div className={styles.topActions}>
+                  <label className={styles.roomSizeControl}>
+                    <span>Số học sinh</span>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={roomSize}
+                      onChange={(event) => setRoomSize(Number(event.target.value))}
+                      aria-label="Số học sinh trong phòng"
+                    />
+                  </label>
                   <button
                     className={styles.openRoomButton}
                     onClick={createGameRoom}
-                    disabled={busy || !selectedSet.is_published || questions.length === 0}
+                    disabled={busy || !selectedSet.is_published || questions.length === 0 || !Number.isInteger(roomSize) || roomSize < 1}
                     title={!selectedSet.is_published ? "Hãy xuất bản bộ đề trước" : questions.length === 0 ? "Hãy thêm câu hỏi trước" : ""}
                   >
-                    ▶ Mở phòng 5 người
+                    ▶ Mở phòng
                   </button>
                   <button className={styles.addQuestionButton} onClick={openNewQuestion}>＋ Thêm câu hỏi</button>
                 </div>

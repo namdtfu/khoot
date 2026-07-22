@@ -96,7 +96,7 @@ export default function HostPage() {
     : 0;
   const allAnswered = Boolean(
     snapshot
-    && snapshot.players.length === 5
+    && snapshot.players.length === snapshot.room.max_players
     && snapshot.players.every((player) => player.answered)
   );
 
@@ -120,7 +120,7 @@ export default function HostPage() {
 
   const canStart = Boolean(
     snapshot
-    && snapshot.players.length === 5
+    && snapshot.players.length === snapshot.room.max_players
     && snapshot.players.every((player) => player.is_ready)
   );
 
@@ -170,12 +170,12 @@ export default function HostPage() {
       return (
         <div className={styles.centerStage}>
           <span className={styles.countdownLabel}>PHÒNG ĐANG MỞ</span>
-          <h2>Chờ đủ 5 học sinh sẵn sàng</h2>
-          <p>{snapshot.players.length}/5 em đã vào phòng · {snapshot.players.filter((player) => player.is_ready).length}/5 đã sẵn sàng</p>
+          <h2>Chờ đủ {room.max_players} học sinh sẵn sàng</h2>
+          <p>{snapshot.players.length}/{room.max_players} em đã vào phòng · {snapshot.players.filter((player) => player.is_ready).length}/{room.max_players} đã sẵn sàng</p>
           <button className={styles.startButton} disabled={!canStart} onClick={startGame}>
             {canStart ? "Bắt đầu — 3, 2, 1!" : "Chưa thể bắt đầu"}
           </button>
-          <p className={styles.helper}>Nút bắt đầu sẽ mở khi đủ 5 em và tất cả đã bấm sẵn sàng.</p>
+          <p className={styles.helper}>Nút bắt đầu sẽ mở khi đủ {room.max_players} em và tất cả đã bấm sẵn sàng.</p>
         </div>
       );
     }
@@ -196,7 +196,7 @@ export default function HostPage() {
           <div className={styles.finishHero}>
             <span>🏆</span>
             <h1>Hoàn thành!</h1>
-            <p>Thống kê kết quả của cả 5 học sinh.</p>
+            <p>Thống kê kết quả của cả {room.max_players} học sinh.</p>
           </div>
           <div className={styles.statsTable}>
             <div className={styles.statsHeader}><span>HẠNG</span><span>HỌC SINH</span><span>ĐÚNG</span><span>TB</span><span>ĐIỂM</span></div>
@@ -249,7 +249,7 @@ export default function HostPage() {
         </div>
         <div className={styles.answerProgress}>
           <span>{revealed ? "Đang hiển thị đáp án" : "Đang nhận câu trả lời realtime"}</span>
-          <strong>{snapshot.players.filter((player) => player.answered).length}/5 đã trả lời</strong>
+          <strong>{snapshot.players.filter((player) => player.answered).length}/{room.max_players} đã trả lời</strong>
         </div>
       </>
     );
@@ -272,14 +272,14 @@ export default function HostPage() {
           <aside className={styles.sidePanel}>
             {room.status === "waiting" && (
               <div className={styles.linkCard}>
-                <span>LIÊN KẾT DÀNH CHO 5 HỌC SINH</span>
+                <span>LIÊN KẾT DÀNH CHO {room.max_players} HỌC SINH</span>
                 <div className={styles.linkRow}><input readOnly value={playerLink} /><button onClick={copyLink}>{copied ? "Đã chép" : "Sao chép"}</button></div>
               </div>
             )}
             <span className={styles.eyebrow}>NGƯỜI CHƠI</span>
-            <h2>{snapshot.players.length}/5 học sinh</h2>
+            <h2>{snapshot.players.length}/{room.max_players} học sinh</h2>
             <div className={styles.playerList}>
-              {[0, 1, 2, 3, 4].map((index) => {
+              {Array.from({ length: room.max_players }, (_, index) => {
                 const player = snapshot.players[index];
                 return player ? (
                   <div className={`${styles.playerCard} ${player.is_ready ? styles.ready : ""} ${player.answered ? styles.answered : ""}`} key={player.id}>

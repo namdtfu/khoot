@@ -310,7 +310,7 @@ button.answer { cursor: pointer; font: inherit; }
 .waitingHero p { color: #71807b; }
 .readyButton { width: min(360px, 100%); }
 .readyButton.active { background: var(--green); box-shadow: 0 4px 0 #147455; }
-.waitingPlayers { display: flex; justify-content: center; gap: 7px; margin-top: 28px; }
+.waitingPlayers { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; margin-top: 28px; }
 .waitingPlayers i {
   display: grid;
   place-items: center;
@@ -365,7 +365,7 @@ button.answer { cursor: pointer; font: inherit; }
   .hostGrid { grid-template-columns: 1fr; }
   .stage { min-height: auto; }
   .sidePanel { order: -1; }
-  .playerList { display: grid; grid-template-columns: repeat(5, minmax(100px, 1fr)); overflow-x: auto; }
+  .playerList { display: grid; grid-auto-columns: minmax(100px, 1fr); grid-auto-flow: column; overflow-x: auto; }
   .playerCard { grid-template-columns: 32px minmax(55px, 1fr); }
   .playerCard > span { display: none; }
 }

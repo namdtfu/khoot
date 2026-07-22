@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const STEPS = [
   { label: "Nhập tên", detail: "Mở liên kết phòng", color: "#ff8b73", mark: "1" },
-  { label: "Sẵn sàng", detail: "Chờ đủ 5 học sinh", color: "#ffcd56", mark: "2" },
+  { label: "Sẵn sàng", detail: "Chờ đủ số học sinh", color: "#ffcd56", mark: "2" },
   { label: "Bắt đầu", detail: "Đếm ngược 3 · 2 · 1", color: "#45c9a5", mark: "3" },
   { label: "Trả lời", detail: "Đúng và nhanh để ghi điểm", color: "#8198ed", mark: "4" },
   { label: "Xếp hạng", detail: "Thống kê sau câu cuối", color: "#c88ceb", mark: "5" },
@@ -17,15 +17,15 @@ export default function Home() {
       </header>
       <section className="welcome-grid">
         <div className="hero-copy">
-          <span className="eyebrow">TRẮC NGHIỆM REALTIME · 5 HỌC SINH</span>
-          <h1>5 máy.<br />1 phòng.<br /><em>Ai nhanh nhất?</em></h1>
-          <p>Người quản trị mở phòng và gửi liên kết. Cả 5 học sinh cùng trả lời trong thời gian thực, ghi điểm bằng độ chính xác và tốc độ.</p>
+          <span className="eyebrow">TRẮC NGHIỆM REALTIME · NHIỀU HỌC SINH</span>
+          <h1>Nhiều máy.<br />1 phòng.<br /><em>Ai nhanh nhất?</em></h1>
+          <p>Người quản trị tự chọn số học sinh rồi gửi liên kết phòng. Tất cả cùng trả lời trong thời gian thực, ghi điểm bằng độ chính xác và tốc độ.</p>
           <Link className="primary-button" href="/admin">Mở trang quản trị <span aria-hidden="true">→</span></Link>
           <small>Học sinh tham gia bằng liên kết riêng của từng phòng</small>
         </div>
         <div className="lobby-card" aria-label="Luồng một trận đấu Khoot">
           <div className="lobby-topline">
-            <div><span>PHÒNG THI</span><strong>5 + 1 MÁY</strong></div>
+            <div><span>PHÒNG THI</span><strong>N + 1 MÁY</strong></div>
             <span className="live-pill"><i /> REALTIME</span>
           </div>
           <div className="word-preview" aria-hidden="true">
@@ -40,7 +40,7 @@ export default function Home() {
             ))}
           </div>
           <div className="lobby-footer">
-            <span>Đủ 5 người mới bắt đầu</span>
+            <span>Đủ số người đã đặt mới bắt đầu</span>
             <div className="tiny-avatars" aria-hidden="true">
               {STEPS.map((step) => <i key={step.label} style={{ background: step.color }} />)}
             </div>
