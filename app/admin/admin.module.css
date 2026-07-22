@@ -51,7 +51,7 @@
   line-height: .92;
   letter-spacing: -5px;
 }
-.authIntro h1 em { color: var(--orange); font: italic 500 1em Georgia, serif; }
+.authIntro h1 em { color: var(--orange); font: italic 600 1em "Be Vietnam Pro", sans-serif; }
 .authIntro > p { max-width: 570px; color: #576762; font-size: 17px; line-height: 1.65; }
 .featureRow { display: flex; gap: 24px; margin-top: 35px; }
 .featureRow span { display: flex; flex-direction: column; gap: 4px; color: #6d7a76; font-size: 11px; }
@@ -99,7 +99,7 @@
   outline: none;
   background: white;
   color: var(--ink);
-  font: 500 14px Arial, sans-serif;
+  font: 500 14px "Be Vietnam Pro", system-ui, sans-serif;
 }
 .authCard input:focus, .packSettings input:focus, .packSettings textarea:focus,
 .questionEditor input:focus, .questionEditor textarea:focus {
@@ -194,7 +194,7 @@
   border-radius: 8px;
   background: var(--ink);
   color: var(--yellow, #ffc84a);
-  font: italic 700 17px Georgia, serif;
+  font: italic 700 17px "Be Vietnam Pro", sans-serif;
 }
 .setList button > span:nth-child(2) { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
 .setList strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
@@ -335,7 +335,7 @@
   border-radius: 50%;
   background: #eee7dc;
   color: var(--orange);
-  font: italic 700 25px Georgia, serif;
+  font: italic 700 25px "Be Vietnam Pro", sans-serif;
 }
 .emptyQuestions h3, .noSelection h2 { margin: 0 0 7px; }
 .emptyQuestions p, .noSelection p { margin: 0 0 17px; color: #788681; font-size: 11px; }

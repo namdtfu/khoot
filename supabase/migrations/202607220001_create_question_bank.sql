@@ -4,7 +4,7 @@ create table if not exists public.question_sets (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
   title text not null check (char_length(trim(title)) between 1 and 120),
-  topic text not null default 'T?ng h?p' check (char_length(trim(topic)) between 1 and 80),
+  topic text not null default 'Tổng hợp' check (char_length(trim(topic)) between 1 and 80),
   description text not null default '',
   is_published boolean not null default false,
   created_at timestamptz not null default now(),

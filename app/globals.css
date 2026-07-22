@@ -15,7 +15,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Be Vietnam Pro", system-ui, sans-serif;
 }
 button, a { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
@@ -93,8 +93,8 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .hero-copy h1 em {
   color: var(--orange);
-  font-family: Georgia, serif;
-  font-weight: 500;
+  font-family: inherit;
+  font-weight: 600;
 }
 .hero-copy p {
   max-width: 500px;
@@ -174,10 +174,10 @@ button { -webkit-tap-highlight-color: transparent; }
   position: absolute;
   right: -15px; bottom: -50px;
   color: rgba(255,255,255,.05);
-  font: italic 180px Georgia, serif;
+  font: italic 800 180px "Be Vietnam Pro", sans-serif;
 }
 .word-preview span { color: var(--yellow); font-size: 10px; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; }
-.word-preview strong { margin-top: 6px; font: italic 45px/1 Georgia, serif; }
+.word-preview strong { margin-top: 6px; font: italic 700 45px/1 "Be Vietnam Pro", sans-serif; }
 .word-preview i { margin-top: 8px; color: rgba(255,255,255,.58); font-size: 12px; font-style: normal; }
 .player-list { padding: 10px 17px; }
 .player-row {
@@ -246,7 +246,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .quiz-content { width: min(1100px, calc(100% - 40px)); margin: 0 auto; padding: clamp(34px, 5vh, 58px) 0 38px; }
 .question-card { text-align: center; }
 .question-card .eyebrow { margin-bottom: 14px; }
-.question-card p { margin: 0; color: #687873; font: italic 18px Georgia, serif; }
+.question-card p { margin: 0; color: #687873; font: italic 500 18px "Be Vietnam Pro", sans-serif; }
 .question-card h1 {
   margin: 2px 0 0;
   font-size: clamp(54px, 7.5vw, 92px);
@@ -362,7 +362,7 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .correct-copy > div { display: flex; flex-direction: column; gap: 2px; }
 .correct-copy strong { font-size: 17px; }
-.correct-copy p { margin: 2px 0 0; color: #75827d; font: italic 12px Georgia, serif; }
+.correct-copy p { margin: 2px 0 0; color: #75827d; font: italic 500 12px "Be Vietnam Pro", sans-serif; }
 .mini-ranking, .final-ranking { margin: 0; padding: 0; list-style: none; }
 .mini-ranking li, .final-ranking > div {
   display: grid;
@@ -414,7 +414,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .finish-card .eyebrow { margin-bottom: 12px; }
 .finish-card h1 {
   margin: 0;
-  font: italic 600 clamp(42px, 8vw, 64px)/.92 Georgia, serif;
+  font: italic 700 clamp(42px, 8vw, 64px)/.92 "Be Vietnam Pro", sans-serif;
   letter-spacing: -3px;
 }
 .winner-avatar {

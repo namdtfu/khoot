@@ -55,7 +55,7 @@ export default function AdminPage() {
     setNotice({
       type: "error",
       text: schemaMissing
-        ? "Database ch?a c? schema Khoot. H?y ch?y file migration Supabase m?t l?n."
+        ? "Cơ sở dữ liệu chưa có cấu trúc Khoot. Hãy chạy tệp migration Supabase một lần."
         : message,
     });
   };
@@ -121,7 +121,7 @@ export default function AdminPage() {
       } else {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        if (!data.session) setNotice({ type: "success", text: "?? t?o t?i kho?n. H?y ki?m tra email ?? x?c nh?n." });
+        if (!data.session) setNotice({ type: "success", text: "Đã tạo tài khoản. Hãy kiểm tra email để xác nhận." });
       }
     } catch (error) { showError(error); }
     finally { setBusy(false); }
@@ -133,13 +133,13 @@ export default function AdminPage() {
     try {
       const { data, error } = await supabase
         .from("question_sets")
-        .insert({ owner_id: session.user.id, title: "B? ?? m?i", topic: "T?ng h?p" })
+        .insert({ owner_id: session.user.id, title: "Bộ đề mới", topic: "Tổng hợp" })
         .select()
         .single();
       if (error) throw error;
       setSets((current) => [data as QuestionSet, ...current]);
       setSelectedId(data.id);
-      setNotice({ type: "success", text: "?? t?o b? ?? m?i." });
+      setNotice({ type: "success", text: "Đã tạo bộ đề mới." });
     } catch (error) { showError(error); }
     finally { setBusy(false); }
   };
@@ -157,20 +157,20 @@ export default function AdminPage() {
         .single();
       if (error) throw error;
       setSets((current) => current.map((item) => item.id === data.id ? data as QuestionSet : item));
-      setNotice({ type: "success", text: "?? l?u th?ng tin b? ??." });
+      setNotice({ type: "success", text: "Đã lưu thông tin bộ đề." });
     } catch (error) { showError(error); }
     finally { setBusy(false); }
   };
 
   const deleteSet = async () => {
-    if (!selectedSet || !window.confirm(`X?a ?${selectedSet.title}? v? to?n b? c?u h?i?`)) return;
+    if (!selectedSet || !window.confirm(`Xóa “${selectedSet.title}” và toàn bộ câu hỏi?`)) return;
     setBusy(true); setNotice(null);
     try {
       const { error } = await supabase.from("question_sets").delete().eq("id", selectedSet.id);
       if (error) throw error;
       const remaining = sets.filter((item) => item.id !== selectedSet.id);
       setSets(remaining); setSelectedId(remaining[0]?.id ?? null);
-      setNotice({ type: "success", text: "?? x?a b? ??." });
+      setNotice({ type: "success", text: "Đã xóa bộ đề." });
     } catch (error) { showError(error); }
     finally { setBusy(false); }
   };
@@ -195,7 +195,7 @@ export default function AdminPage() {
     event.preventDefault();
     if (!selectedSet) return;
     if (!questionForm.prompt.trim() || questionForm.options.some((option) => !option.trim())) {
-      setNotice({ type: "error", text: "H?y nh?p n?i dung v? ?? 4 ??p ?n." });
+      setNotice({ type: "error", text: "Hãy nhập nội dung và đủ 4 đáp án." });
       return;
     }
     setBusy(true); setNotice(null);
@@ -216,20 +216,20 @@ export default function AdminPage() {
       if (error) throw error;
       await loadQuestions(selectedSet.id);
       setEditorOpen(false);
-      setNotice({ type: "success", text: editingQuestionId ? "?? c?p nh?t c?u h?i." : "?? th?m c?u h?i." });
+      setNotice({ type: "success", text: editingQuestionId ? "Đã cập nhật câu hỏi." : "Đã thêm câu hỏi." });
     } catch (error) { showError(error); }
     finally { setBusy(false); }
   };
 
   const deleteQuestion = async (question: Question) => {
-    if (!window.confirm("X?a c?u h?i n?y?")) return;
+    if (!window.confirm("Xóa câu hỏi này?")) return;
     setBusy(true); setNotice(null);
     try {
       const { error } = await supabase.from("questions").delete().eq("id", question.id);
       if (error) throw error;
       setQuestions((current) => current.filter((item) => item.id !== question.id));
       if (editingQuestionId === question.id) setEditorOpen(false);
-      setNotice({ type: "success", text: "?? x?a c?u h?i." });
+      setNotice({ type: "success", text: "Đã xóa câu hỏi." });
     } catch (error) { showError(error); }
     finally { setBusy(false); }
   };
@@ -240,43 +240,43 @@ export default function AdminPage() {
   };
 
   if (!authReady) {
-    return <main className={styles.loading}><span>KHOOT!</span><p>?ang m? khu v?c qu?n tr??</p></main>;
+    return <main className={styles.loading}><span>KHOOT!</span><p>Đang mở khu vực quản trị…</p></main>;
   }
 
   if (!session) {
     return (
       <main className={styles.authShell}>
-        <Link className={styles.backLink} href="/">? V? trang ch?i</Link>
+        <Link className={styles.backLink} href="/">← Về trang chơi</Link>
         <section className={styles.authIntro}>
-          <span className={styles.kicker}>KHOOT CREATOR</span>
-          <h1>T?o b? c?u h?i.<br /><em>Ch?i theo c?ch c?a b?n.</em></h1>
-          <p>So?n c?u h?i tr?c nghi?m cho b?t k? ch? ?? n?o, l?u an to?n v? qu?n l? ? m?t n?i.</p>
+          <span className={styles.kicker}>TRÌNH TẠO BỘ ĐỀ</span>
+          <h1>Tạo bộ câu hỏi.<br /><em>Chơi theo cách của bạn.</em></h1>
+          <p>Soạn câu hỏi trắc nghiệm cho bất kỳ chủ đề nào, lưu an toàn và quản lý ở một nơi.</p>
           <div className={styles.featureRow}>
-            <span><b>01</b> Nhi?u l?nh v?c</span>
-            <span><b>02</b> 4 ??p ?n</span>
-            <span><b>03</b> Ch?m ?i?m t? ??ng</span>
+            <span><b>01</b> Nhiều lĩnh vực</span>
+            <span><b>02</b> 4 đáp án</span>
+            <span><b>03</b> Chấm điểm tự động</span>
           </div>
         </section>
         <section className={styles.authCard}>
           <div className={styles.authTabs}>
-            <button className={authMode === "login" ? styles.activeTab : ""} onClick={() => setAuthMode("login")}>??ng nh?p</button>
-            <button className={authMode === "signup" ? styles.activeTab : ""} onClick={() => setAuthMode("signup")}>T?o t?i kho?n</button>
+            <button className={authMode === "login" ? styles.activeTab : ""} onClick={() => setAuthMode("login")}>Đăng nhập</button>
+            <button className={authMode === "signup" ? styles.activeTab : ""} onClick={() => setAuthMode("signup")}>Tạo tài khoản</button>
           </div>
-          <span className={styles.cardEyebrow}>{authMode === "login" ? "CH?O M?NG TR? L?I" : "B?T ??U MI?N PH?"}</span>
-          <h2>{authMode === "login" ? "V?o ph?ng qu?n tr?" : "T?o t?i kho?n admin"}</h2>
+          <span className={styles.cardEyebrow}>{authMode === "login" ? "CHÀO MỪNG TRỞ LẠI" : "BẮT ĐẦU MIỄN PHÍ"}</span>
+          <h2>{authMode === "login" ? "Vào phòng quản trị" : "Tạo tài khoản quản trị"}</h2>
           <form onSubmit={submitAuth}>
-            <label>Email
+            <label>Địa chỉ email
               <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="admin@example.com" autoComplete="email" required />
             </label>
-            <label>M?t kh?u
-              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="T?i thi?u 6 k? t?" minLength={6} autoComplete={authMode === "login" ? "current-password" : "new-password"} required />
+            <label>Mật khẩu
+              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Tối thiểu 6 ký tự" minLength={6} autoComplete={authMode === "login" ? "current-password" : "new-password"} required />
             </label>
             {notice && <p className={notice.type === "error" ? styles.errorNotice : styles.successNotice}>{notice.text}</p>}
             <button className={styles.submitButton} disabled={busy} type="submit">
-              {busy ? "?ang x? l??" : authMode === "login" ? "??ng nh?p ?" : "T?o t?i kho?n ?"}
+              {busy ? "Đang xử lý…" : authMode === "login" ? "Đăng nhập →" : "Tạo tài khoản →"}
             </button>
           </form>
-          <small>D? li?u c?a m?i t?i kho?n ???c t?ch ri?ng b?ng Row Level Security.</small>
+          <small>Dữ liệu của mỗi tài khoản được tách riêng và bảo vệ bằng chính sách truy cập.</small>
         </section>
       </main>
     );
@@ -286,17 +286,17 @@ export default function AdminPage() {
     <main className={styles.dashboard}>
       <header className={styles.header}>
         <Link className={styles.logo} href="/">KHOOT<span>!</span></Link>
-        <div className={styles.headerTitle}><span>TRANG QU?N TR?</span><strong>Ng?n h?ng c?u h?i</strong></div>
+        <div className={styles.headerTitle}><span>TRANG QUẢN TRỊ</span><strong>Ngân hàng câu hỏi</strong></div>
         <div className={styles.account}>
-          <div><span>?ANG ??NG NH?P</span><strong>{session.user.email}</strong></div>
-          <button onClick={signOut}>??ng xu?t</button>
+          <div><span>ĐANG ĐĂNG NHẬP</span><strong>{session.user.email}</strong></div>
+          <button onClick={signOut}>Đăng xuất</button>
         </div>
       </header>
       <div className={styles.workspace}>
         <aside className={styles.sidebar}>
           <div className={styles.sidebarHeading}>
-            <div><span>B? ?? C?A B?N</span><strong>{sets.length} b? ??</strong></div>
-            <button onClick={createSet} disabled={busy} aria-label="T?o b? ?? m?i">+</button>
+            <div><span>BỘ ĐỀ CỦA BẠN</span><strong>{sets.length} bộ đề</strong></div>
+            <button onClick={createSet} disabled={busy} aria-label="Tạo bộ đề mới">+</button>
           </div>
           <div className={styles.setList}>
             {sets.map((item) => (
@@ -306,82 +306,82 @@ export default function AdminPage() {
                 <i className={item.is_published ? styles.publishedDot : ""} />
               </button>
             ))}
-            {!sets.length && <div className={styles.emptySets}><span>?</span><p>Ch?a c? b? ?? n?o.</p><button onClick={createSet}>T?o b? ?? ??u ti?n</button></div>}
+            {!sets.length && <div className={styles.emptySets}><span>✦</span><p>Chưa có bộ đề nào.</p><button onClick={createSet}>Tạo bộ đề đầu tiên</button></div>}
           </div>
-          <div className={styles.sidebarHelp}><span>G?I ?</span><p>M?i c?u h?i lu?n c? ??ng 4 l?a ch?n v? 1 ??p ?n ch?nh x?c.</p></div>
+          <div className={styles.sidebarHelp}><span>GỢI Ý</span><p>Mỗi câu hỏi luôn có đúng 4 lựa chọn và 1 đáp án chính xác.</p></div>
         </aside>
         <section className={styles.content}>
-          {notice && <div className={notice.type === "error" ? styles.errorBanner : styles.successBanner}>{notice.text}<button onClick={() => setNotice(null)}>?</button></div>}
+          {notice && <div className={notice.type === "error" ? styles.errorBanner : styles.successBanner}>{notice.text}<button onClick={() => setNotice(null)}>×</button></div>}
           {!selectedSet ? (
-            <div className={styles.noSelection}><span>?</span><h2>T?o b? ?? ??u ti?n</h2><p>B?t ??u t? m?t ch? ?? b?t k? r?i th?m c?c c?u h?i tr?c nghi?m.</p><button onClick={createSet}>T?o b? ?? m?i</button></div>
+            <div className={styles.noSelection}><span>＋</span><h2>Tạo bộ đề đầu tiên</h2><p>Bắt đầu từ một chủ đề bất kỳ rồi thêm các câu hỏi trắc nghiệm.</p><button onClick={createSet}>Tạo bộ đề mới</button></div>
           ) : (
             <>
               <div className={styles.contentTop}>
                 <div>
-                  <span className={styles.breadcrumb}>B? ?? / {selectedSet.topic.toUpperCase()}</span>
+                  <span className={styles.breadcrumb}>BỘ ĐỀ / {selectedSet.topic.toUpperCase()}</span>
                   <h1>{selectedSet.title}</h1>
-                  <p>{questions.length} c?u h?i ? {selectedSet.is_published ? "?ang xu?t b?n" : "B?n nh?p"}</p>
+                  <p>{questions.length} câu hỏi · {selectedSet.is_published ? "Đang xuất bản" : "Bản nháp"}</p>
                 </div>
-                <button className={styles.addQuestionButton} onClick={openNewQuestion}>? Th?m c?u h?i</button>
+                <button className={styles.addQuestionButton} onClick={openNewQuestion}>＋ Thêm câu hỏi</button>
               </div>
 
               <form className={styles.packSettings} onSubmit={saveSet}>
                 <div className={styles.sectionTitle}>
-                  <div><span>TH?NG TIN CHUNG</span><strong>C?u h?nh b? ??</strong></div>
+                  <div><span>THÔNG TIN CHUNG</span><strong>Cấu hình bộ đề</strong></div>
                   <div className={styles.formActions}>
-                    <button className={styles.deleteButton} type="button" onClick={deleteSet} disabled={busy}>X?a</button>
-                    <button className={styles.saveButton} type="submit" disabled={busy}>L?u thay ??i</button>
+                    <button className={styles.deleteButton} type="button" onClick={deleteSet} disabled={busy}>Xóa</button>
+                    <button className={styles.saveButton} type="submit" disabled={busy}>Lưu thay đổi</button>
                   </div>
                 </div>
                 <div className={styles.packGrid}>
-                  <label>T?n b? ??
+                  <label>Tên bộ đề
                     <input value={packForm.title} onChange={(event) => setPackForm({ ...packForm, title: event.target.value })} maxLength={120} required />
                   </label>
-                  <label>L?nh v?c
-                    <input value={packForm.topic} onChange={(event) => setPackForm({ ...packForm, topic: event.target.value })} maxLength={80} placeholder="Ti?ng Anh, L?ch s?, Khoa h?c?" required />
+                  <label>Lĩnh vực
+                    <input value={packForm.topic} onChange={(event) => setPackForm({ ...packForm, topic: event.target.value })} maxLength={80} placeholder="Tiếng Anh, Lịch sử, Khoa học…" required />
                   </label>
-                  <label className={styles.fullField}>M? t?
-                    <textarea value={packForm.description} onChange={(event) => setPackForm({ ...packForm, description: event.target.value })} rows={2} placeholder="M? t? ng?n ?? d? nh?n bi?t b? ??" />
+                  <label className={styles.fullField}>Mô tả
+                    <textarea value={packForm.description} onChange={(event) => setPackForm({ ...packForm, description: event.target.value })} rows={2} placeholder="Mô tả ngắn để dễ nhận biết bộ đề" />
                   </label>
                 </div>
                 <label className={styles.switchRow}>
                   <input type="checkbox" checked={packForm.is_published} onChange={(event) => setPackForm({ ...packForm, is_published: event.target.checked })} />
-                  <span><i /><b>{packForm.is_published ? "?? s?n s?ng s? d?ng" : "?ang ? ch? ?? b?n nh?p"}</b><small>B?n c? th? thay ??i tr?ng th?i b?t c? l?c n?o.</small></span>
+                  <span><i /><b>{packForm.is_published ? "Đã sẵn sàng sử dụng" : "Đang ở chế độ bản nháp"}</b><small>Bạn có thể thay đổi trạng thái bất cứ lúc nào.</small></span>
                 </label>
               </form>
 
               {editorOpen && (
                 <form className={styles.questionEditor} onSubmit={saveQuestion}>
                   <div className={styles.sectionTitle}>
-                    <div><span>{editingQuestionId ? "CH?NH S?A" : "C?U H?I M?I"}</span><strong>{editingQuestionId ? "C?p nh?t n?i dung" : `C?u s? ${questions.length + 1}`}</strong></div>
-                    <button className={styles.closeButton} type="button" onClick={() => setEditorOpen(false)}>?</button>
+                    <div><span>{editingQuestionId ? "CHỈNH SỬA" : "CÂU HỎI MỚI"}</span><strong>{editingQuestionId ? "Cập nhật nội dung" : `Câu số ${questions.length + 1}`}</strong></div>
+                    <button className={styles.closeButton} type="button" onClick={() => setEditorOpen(false)}>×</button>
                   </div>
-                  <label>N?i dung / ??nh ngh?a
-                    <textarea value={questionForm.prompt} onChange={(event) => setQuestionForm({ ...questionForm, prompt: event.target.value })} rows={3} placeholder="V? d?: T? ?curious? c? ngh?a l? g??" autoFocus required />
+                  <label>Nội dung / định nghĩa
+                    <textarea value={questionForm.prompt} onChange={(event) => setQuestionForm({ ...questionForm, prompt: event.target.value })} rows={3} placeholder="Ví dụ: Từ “curious” có nghĩa là gì?" autoFocus required />
                   </label>
                   <div className={styles.optionsGrid}>
                     {questionForm.options.map((option, index) => (
                       <label key={index} className={questionForm.correct_option === index ? styles.correctOption : ""}>
-                        <span><input type="radio" name="correct" checked={questionForm.correct_option === index} onChange={() => setQuestionForm({ ...questionForm, correct_option: index })} /> ??p ?n {String.fromCharCode(65 + index)}</span>
+                        <span><input type="radio" name="correct" checked={questionForm.correct_option === index} onChange={() => setQuestionForm({ ...questionForm, correct_option: index })} /> Đáp án {String.fromCharCode(65 + index)}</span>
                         <input value={option} onChange={(event) => {
                           const options = [...questionForm.options];
                           options[index] = event.target.value;
                           setQuestionForm({ ...questionForm, options });
-                        }} placeholder={`Nh?p l?a ch?n ${index + 1}`} required />
+                        }} placeholder={`Nhập lựa chọn ${index + 1}`} required />
                       </label>
                     ))}
                   </div>
                   <div className={styles.editorFooter}>
-                    <span>Ch?n n?t tr?n b?n c?nh ??p ?n ??ng.</span>
-                    <div><button type="button" onClick={() => setEditorOpen(false)}>H?y</button><button className={styles.saveButton} disabled={busy} type="submit">{editingQuestionId ? "C?p nh?t c?u h?i" : "L?u c?u h?i"}</button></div>
+                    <span>Chọn nút tròn bên cạnh đáp án đúng.</span>
+                    <div><button type="button" onClick={() => setEditorOpen(false)}>Hủy</button><button className={styles.saveButton} disabled={busy} type="submit">{editingQuestionId ? "Cập nhật câu hỏi" : "Lưu câu hỏi"}</button></div>
                   </div>
                 </form>
               )}
 
               <div className={styles.questionSection}>
                 <div className={styles.sectionTitle}>
-                  <div><span>DANH S?CH C?U H?I</span><strong>{questions.length} c?u h?i</strong></div>
-                  <button className={styles.textButton} onClick={openNewQuestion}>? Th?m c?u</button>
+                  <div><span>DANH SÁCH CÂU HỎI</span><strong>{questions.length} câu hỏi</strong></div>
+                  <button className={styles.textButton} onClick={openNewQuestion}>＋ Thêm câu</button>
                 </div>
                 <div className={styles.questionList}>
                   {questions.map((question, index) => (
@@ -390,13 +390,13 @@ export default function AdminPage() {
                       <div className={styles.questionBody}>
                         <h3>{question.prompt}</h3>
                         <div className={styles.answerPills}>
-                          {question.options.map((option, optionIndex) => <span key={optionIndex} className={optionIndex === question.correct_option ? styles.correctPill : ""}>{String.fromCharCode(65 + optionIndex)}. {option}{optionIndex === question.correct_option && " ?"}</span>)}
+                          {question.options.map((option, optionIndex) => <span key={optionIndex} className={optionIndex === question.correct_option ? styles.correctPill : ""}>{String.fromCharCode(65 + optionIndex)}. {option}{optionIndex === question.correct_option && " ✓"}</span>)}
                         </div>
                       </div>
-                      <div className={styles.cardActions}><button onClick={() => openQuestion(question)}>S?a</button><button onClick={() => deleteQuestion(question)}>X?a</button></div>
+                      <div className={styles.cardActions}><button onClick={() => openQuestion(question)}>Sửa</button><button onClick={() => deleteQuestion(question)}>Xóa</button></div>
                     </article>
                   ))}
-                  {!questions.length && <div className={styles.emptyQuestions}><span>?</span><h3>B? ?? ch?a c? c?u h?i</h3><p>Th?m c?u h?i ??u ti?n v?i 4 l?a ch?n.</p><button onClick={openNewQuestion}>? Th?m c?u h?i</button></div>}
+                  {!questions.length && <div className={styles.emptyQuestions}><span>＋</span><h3>Bộ đề chưa có câu hỏi</h3><p>Thêm câu hỏi đầu tiên với 4 lựa chọn.</p><button onClick={openNewQuestion}>＋ Thêm câu hỏi</button></div>}
                 </div>
               </div>
             </>

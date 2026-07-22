@@ -15,15 +15,15 @@ const PLAYERS: Player[] = [
 ];
 
 const QUIZ: Question[] = [
-  { word: "curious", sound: "/?kj??.ri.?s/", prompt: "T? n?y c? ngh?a l? g??", options: ["T? m?", "Lo l?ng", "Ch?m ch?", "B?nh t?nh"], correct: 0, example: "She is curious about the world." },
-  { word: "generous", sound: "/?d?en.?r.?s/", prompt: "Ch?n ngh?a ??ng c?a t? n?y.", options: ["Nghi?m kh?c", "H?o ph?ng", "Nh?t nh?t", "Th?ng minh"], correct: 1, example: "He is generous with his time." },
-  { word: "journey", sound: "/?d???.ni/", prompt: "T? n?y g?n ngh?a nh?t v?i?", options: ["B?a ti?c", "K? ni?m", "H?nh tr?nh", "L?a ch?n"], correct: 2, example: "The journey took three days." },
-  { word: "improve", sound: "/?m?pru?v/", prompt: "??u l? ngh?a ch?nh x?c?", options: ["C?i thi?n", "T? ch?i", "Kh?m ph?", "Ghi nh?"], correct: 0, example: "Practice will improve your English." },
-  { word: "ancient", sound: "/?e?n.??nt/", prompt: "Ch?n b?n d?ch ??ng.", options: ["Hi?n ??i", "??ng ??c", "Xa x?i", "C? x?a"], correct: 3, example: "They visited an ancient temple." },
-  { word: "opportunity", sound: "/??p.??t?u?.n?.ti/", prompt: "Ch?n ngh?a ??ng ?? v? ??ch!", options: ["Th? th?ch", "Tr?ch nhi?m", "C? h?i", "Kinh nghi?m"], correct: 2, example: "This is a great opportunity to learn." },
+  { word: "curious", sound: "/ˈkjʊə.ri.əs/", prompt: "Từ này có nghĩa là gì?", options: ["Tò mò", "Lo lắng", "Chăm chỉ", "Bình tĩnh"], correct: 0, example: "Cô ấy tò mò về thế giới." },
+  { word: "generous", sound: "/ˈdʒen.ər.əs/", prompt: "Chọn nghĩa đúng của từ này.", options: ["Nghiêm khắc", "Hào phóng", "Nhút nhát", "Thông minh"], correct: 1, example: "Anh ấy rất hào phóng với thời gian của mình." },
+  { word: "journey", sound: "/ˈdʒɜː.ni/", prompt: "Từ này gần nghĩa nhất với…", options: ["Bữa tiệc", "Kỷ niệm", "Hành trình", "Lựa chọn"], correct: 2, example: "Hành trình kéo dài ba ngày." },
+  { word: "improve", sound: "/ɪmˈpruːv/", prompt: "Đâu là nghĩa chính xác?", options: ["Cải thiện", "Từ chối", "Khám phá", "Ghi nhớ"], correct: 0, example: "Luyện tập sẽ giúp bạn cải thiện tiếng Anh." },
+  { word: "ancient", sound: "/ˈeɪn.ʃənt/", prompt: "Chọn bản dịch đúng.", options: ["Hiện đại", "Đông đúc", "Xa xôi", "Cổ xưa"], correct: 3, example: "Họ đã ghé thăm một ngôi đền cổ xưa." },
+  { word: "opportunity", sound: "/ˌɒp.əˈtʃuː.nə.ti/", prompt: "Chọn nghĩa đúng để về đích!", options: ["Thử thách", "Trách nhiệm", "Cơ hội", "Kinh nghiệm"], correct: 2, example: "Đây là một cơ hội tuyệt vời để học hỏi." },
 ];
 
-const SHAPES = ["?", "?", "?", "?"];
+const SHAPES = ["▲", "◆", "●", "■"];
 
 export default function Home() {
   const [screen, setScreen] = useState<"welcome" | "game" | "finish">("welcome");
@@ -74,35 +74,35 @@ export default function Home() {
     return (
       <main className="welcome-shell">
         <header className="topbar">
-          <a className="brand" href="#" aria-label="Khoot Mini - trang ch?">KHOOT<span>!</span></a>
-          <Link className="round-label" href="/admin">QU?N L? B? ?? ?</Link>
+          <a className="brand" href="#" aria-label="Khoot Mini - trang chủ">KHOOT<span>!</span></a>
+          <Link className="round-label" href="/admin">QUẢN LÝ BỘ ĐỀ →</Link>
         </header>
         <section className="welcome-grid">
           <div className="hero-copy">
-            <span className="eyebrow">B? ?? ? TI?NG ANH C? B?N</span>
-            <h1>5 ng??i.<br />6 t? m?i.<br /><em>Ai nh? nhanh nh?t?</em></h1>
-            <p>Chuy?n m?y cho t?ng ng??i, ch?n ngh?a ??ng v? c?ng xem ai d?n ??u. Kh?ng c?n ??ng nh?p.</p>
-            <button className="primary-button" type="button" onClick={start}>Ch?i ngay <span aria-hidden="true">?</span></button>
-            <small>Nh?n Enter ?? b?t ??u</small>
+            <span className="eyebrow">BỘ ĐỀ · TIẾNG ANH CƠ BẢN</span>
+            <h1>5 người.<br />6 từ mới.<br /><em>Ai nhớ nhanh nhất?</em></h1>
+            <p>Chuyền máy cho từng người, chọn nghĩa đúng và cùng xem ai dẫn đầu. Không cần đăng nhập.</p>
+            <button className="primary-button" type="button" onClick={start}>Chơi ngay <span aria-hidden="true">→</span></button>
+            <small>Nhấn Enter để bắt đầu</small>
           </div>
-          <div className="lobby-card" aria-label="Danh s?ch ng??i ch?i">
+          <div className="lobby-card" aria-label="Danh sách người chơi">
             <div className="lobby-topline">
-              <div><span>PH?NG H?C</span><strong>#5842</strong></div>
-              <span className="live-pill"><i /> S?N S?NG</span>
+              <div><span>PHÒNG HỌC</span><strong>#5842</strong></div>
+              <span className="live-pill"><i /> SẴN SÀNG</span>
             </div>
             <div className="word-preview" aria-hidden="true">
-              <span>word of the day</span><strong>curious</strong><i>/?kj??.ri.?s/</i>
+              <span>Từ mới hôm nay</span><strong>curious</strong><i>/ˈkjʊə.ri.əs/</i>
             </div>
             <div className="player-list">
               {players.map((player, index) => (
                 <div className="player-row" key={player.id}>
                   <span className="avatar" style={{ background: player.color }}>{player.name[0]}</span>
-                  <strong>{player.name}</strong><span className="seat">P{index + 1}</span><span className="ready-dot">?</span>
+                  <strong>{player.name}</strong><span className="seat">N{index + 1}</span><span className="ready-dot">✓</span>
                 </div>
               ))}
             </div>
             <div className="lobby-footer">
-              <span>5 / 5 ng??i ch?i</span>
+              <span>5 / 5 người chơi</span>
               <div className="tiny-avatars" aria-hidden="true">
                 {players.map((player) => <i key={player.id} style={{ background: player.color }} />)}
               </div>
@@ -120,11 +120,11 @@ export default function Home() {
         <div className="confetti confetti-one" /><div className="confetti confetti-two" />
         <a className="brand finish-brand" href="#" onClick={(event) => { event.preventDefault(); start(); }}>KHOOT<span>!</span></a>
         <section className="finish-card">
-          <span className="eyebrow">HO?N TH?NH 6 / 6 C?U</span>
-          <h1>Qu?n qu?n<br />t? v?ng!</h1>
-          <div className="winner-avatar" style={{ background: winner.color }}>{winner.name[0]}<span>?</span></div>
+          <span className="eyebrow">HOÀN THÀNH 6 / 6 CÂU</span>
+          <h1>Quán quân<br />từ vựng!</h1>
+          <div className="winner-avatar" style={{ background: winner.color }}>{winner.name[0]}<span>★</span></div>
           <h2>{winner.name}</h2>
-          <strong className="winner-score">{winner.score.toLocaleString("vi-VN")} ?i?m</strong>
+          <strong className="winner-score">{winner.score.toLocaleString("vi-VN")} điểm</strong>
           <div className="final-ranking">
             {ranking.map((player, index) => (
               <div key={player.id} className={index === 0 ? "champion-row" : ""}>
@@ -133,7 +133,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <button className="primary-button" type="button" onClick={start}>Ch?i l?i <span aria-hidden="true">?</span></button>
+          <button className="primary-button" type="button" onClick={start}>Chơi lại <span aria-hidden="true">↻</span></button>
         </section>
       </main>
     );
@@ -146,21 +146,21 @@ export default function Home() {
     <main className="game-shell">
       <header className="game-header">
         <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setScreen("welcome"); }}>KHOOT<span>!</span></a>
-        <div className="question-counter"><span>C?U H?I</span><strong>{questionIndex + 1} / {QUIZ.length}</strong></div>
+        <div className="question-counter"><span>CÂU HỎI</span><strong>{questionIndex + 1} / {QUIZ.length}</strong></div>
         <div className="header-score">
-          <span>{stage === "answering" ? active.name : "C? nh?m"}</span>
+          <span>{stage === "answering" ? active.name : "Cả nhóm"}</span>
           <strong>{stage === "answering" ? active.score : players.reduce((sum, player) => sum + player.score, 0).toLocaleString("vi-VN")}</strong>
         </div>
       </header>
-      <div className="progress-track" aria-label={`Ti?n ?? ${questionIndex + 1} tr?n ${QUIZ.length}`}>
+      <div className="progress-track" aria-label={`Tiến độ ${questionIndex + 1} trên ${QUIZ.length}`}>
         <i style={{ width: `${((questionIndex + 1) / QUIZ.length) * 100}%` }} />
       </div>
       <section className="quiz-content">
         <div className="question-card">
-          <span className="eyebrow">DAILY ENGLISH ? T? V?NG</span>
+          <span className="eyebrow">TRẮC NGHIỆM · TỪ VỰNG</span>
           <p>{question.prompt}</p><h1>{question.word}</h1><span className="pronunciation">{question.sound}</span>
         </div>
-        <div className="answer-grid" aria-label="C?c ??p ?n">
+        <div className="answer-grid" aria-label="Các đáp án">
           {question.options.map((option, index) => {
             const state = stage === "reveal" ? (index === question.correct ? "correct" : "muted") : (recentAnswer === index ? "selected" : "");
             return (
@@ -170,11 +170,11 @@ export default function Home() {
                 type="button"
                 onClick={() => choose(index)}
                 disabled={stage === "reveal" || locked}
-                aria-label={`??p ?n ${index + 1}: ${option}`}
+                aria-label={`Đáp án ${index + 1}: ${option}`}
               >
                 <span className="answer-shape" aria-hidden="true">{SHAPES[index]}</span>
                 <strong>{option}</strong>
-                {stage === "answering" ? <kbd>{index + 1}</kbd> : <span className="response-count">{responseCount(index)} ch?n</span>}
+                {stage === "answering" ? <kbd>{index + 1}</kbd> : <span className="response-count">{responseCount(index)} chọn</span>}
               </button>
             );
           })}
@@ -183,9 +183,9 @@ export default function Home() {
           <div className="turn-panel">
             <div className="turn-copy">
               <span className="avatar active-avatar" style={{ background: active.color }}>{active.name[0]}</span>
-              <div><span>L??T C?A</span><strong>{active.name}, ch?n m?t ??p ?n!</strong></div>
+              <div><span>LƯỢT CỦA</span><strong>{active.name}, chọn một đáp án!</strong></div>
             </div>
-            <div className="round-status" aria-label="Ti?n ?? tr? l?i c?a ng??i ch?i">
+            <div className="round-status" aria-label="Tiến độ trả lời của người chơi">
               {players.map((player, index) => (
                 <span
                   key={player.id}
@@ -193,25 +193,25 @@ export default function Home() {
                   style={{ "--player-color": player.color } as React.CSSProperties}
                   title={player.name}
                 >
-                  {answers[player.id] !== undefined ? "?" : player.name[0]}
+                  {answers[player.id] !== undefined ? "✓" : player.name[0]}
                 </span>
               ))}
-              <small>{Object.keys(answers).length}/5 ?? ch?n</small>
+              <small>{Object.keys(answers).length}/5 đã chọn</small>
             </div>
           </div>
         ) : (
           <div className="reveal-panel">
             <div className="correct-copy">
-              <span className="result-check">?</span>
-              <div><span>??P ?N ??NG</span><strong>?{question.options[question.correct]}?</strong><p>{question.example}</p></div>
+              <span className="result-check">✓</span>
+              <div><span>ĐÁP ÁN ĐÚNG</span><strong>“{question.options[question.correct]}”</strong><p>{question.example}</p></div>
             </div>
-            <ol className="mini-ranking" aria-label="B?ng x?p h?ng hi?n t?i">
+            <ol className="mini-ranking" aria-label="Bảng xếp hạng hiện tại">
               {ranking.map((player, index) => (
                 <li key={player.id}><span>{index + 1}</span><i style={{ background: player.color }}>{player.name[0]}</i><strong>{player.name}</strong><b>{player.score.toLocaleString("vi-VN")}</b></li>
               ))}
             </ol>
             <button className="next-button" type="button" onClick={nextQuestion}>
-              {questionIndex === QUIZ.length - 1 ? "Xem k?t qu?" : "C?u ti?p theo"} <span>?</span>
+              {questionIndex === QUIZ.length - 1 ? "Xem kết quả" : "Câu tiếp theo"} <span>→</span>
             </button>
           </div>
         )}

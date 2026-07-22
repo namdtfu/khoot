@@ -1,52 +1,47 @@
 # Khoot Mini
 
-Tr? ch?i tr?c nghi?m d?nh cho nh?m 5 ng??i, k?m trang qu?n tr? b? ?? s? d?ng
-Supabase Auth v? PostgreSQL.
+Khoot Mini là trò chơi trắc nghiệm dành cho nhóm 5 người, kèm trang quản trị bộ đề sử dụng Supabase Auth và PostgreSQL.
 
-## T?nh n?ng
+## Tính năng
 
-- ??ng k?, ??ng nh?p v? ??ng xu?t b?ng email/m?t kh?u.
-- M?i t?i kho?n ch? qu?n l? d? li?u c?a ch?nh m?nh nh? Row Level Security.
-- T?o, s?a, x?a v? xu?t b?n b? ?? ? b?t k? l?nh v?c n?o.
-- M?i c?u h?i g?m n?i dung/??nh ngh?a, ??ng 4 l?a ch?n v? 1 ??p ?n ??ng.
-- B?n ch?i th? 5 ng??i theo l??t v?i b?ng ?i?m.
-- T? ??ng deploy l?n GitHub Pages khi push v?o nh?nh `main`.
+- Đăng ký, đăng nhập và đăng xuất bằng địa chỉ email và mật khẩu.
+- Mỗi tài khoản chỉ quản lý dữ liệu của chính mình nhờ chính sách bảo mật theo từng hàng.
+- Tạo, sửa, xóa và xuất bản bộ đề thuộc bất kỳ lĩnh vực nào.
+- Mỗi câu hỏi gồm nội dung hoặc định nghĩa, đúng 4 lựa chọn và 1 đáp án chính xác.
+- Chơi thử theo lượt với 5 người và bảng xếp hạng điểm.
+- Tự động triển khai lên GitHub Pages khi có thay đổi trên nhánh `main`.
 
-## Ch?y c?c b?
+## Chạy trên máy
 
-Y?u c?u Node.js `>=22.13.0`.
+Yêu cầu Node.js `>=22.13.0`.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Sao ch?p `.env.example` th?nh `.env.local` n?u mu?n d?ng c?u h?nh Supabase
-kh?c. URL v? publishable key c? th? xu?t hi?n trong m? tr?nh duy?t; quy?n truy
-c?p d? li?u ???c b?o v? b?ng RLS.
+Sao chép `.env.example` thành `.env.local` nếu muốn dùng cấu hình Supabase khác. URL và publishable key có thể xuất hiện trong mã trình duyệt; quyền truy cập dữ liệu được bảo vệ bằng chính sách của cơ sở dữ liệu.
 
-## Database
+## Cơ sở dữ liệu
 
-Schema n?m trong:
+Các migration nằm trong thư mục:
 
 ```text
-supabase/migrations/202607220001_create_question_bank.sql
+supabase/migrations
 ```
 
-?p d?ng migration sau khi ?? ??ng nh?p v? link Supabase:
+Áp dụng migration sau khi đã đăng nhập và liên kết dự án Supabase:
 
 ```bash
 npx supabase db push --linked
 ```
 
-Migration t?o hai b?ng `question_sets` v? `questions`, index, trigger c?p
-nh?t th?i gian v? ch?nh s?ch RLS theo ch? s? h?u.
+Migration tạo hai bảng `question_sets` và `questions`, chỉ mục, trigger cập nhật thời gian và chính sách truy cập theo chủ sở hữu.
 
-## Build
+## Tạo bản phát hành
 
 ```bash
 npm run build:pages
 ```
 
-GitHub Actions build static export v? tri?n khai th? m?c `out` l?n GitHub
-Pages.
+GitHub Actions tạo bản xuất tĩnh trong thư mục `out` và triển khai lên GitHub Pages.
