@@ -6,6 +6,7 @@ import {
   ANSWER_SHAPES,
   countdownValue,
   formatResponseTime,
+  getBasePath,
   getErrorMessage,
   getRoomToken,
   secondsRemaining,
@@ -15,6 +16,7 @@ import styles from "../live.module.css";
 
 export default function PlayPage() {
   const [roomToken, setRoomToken] = useState("");
+  const [lobbyToken, setLobbyToken] = useState("");
   const [playerToken, setPlayerToken] = useState("");
   const [initialized, setInitialized] = useState(false);
   const [joined, setJoined] = useState(false);
@@ -28,6 +30,7 @@ export default function PlayPage() {
     const setupTimer = window.setTimeout(() => {
       const token = getRoomToken();
       setRoomToken(token);
+      setLobbyToken(new URLSearchParams(window.location.search).get("lobby") ?? "");
       if (token) {
         const storageKey = `khoot-player-${token}`;
         let personalToken = window.localStorage.getItem(storageKey);
@@ -221,6 +224,15 @@ export default function PlayPage() {
               </div>
             ))}
           </div>
+          {lobbyToken && (
+            <button
+              className={styles.returnLobbyButton}
+              type="button"
+              onClick={() => window.location.assign(`${getBasePath()}/room/?room=${lobbyToken}`)}
+            >
+              Về link phòng cố định
+            </button>
+          )}
         </>
       );
     }

@@ -174,6 +174,43 @@
 }
 .importLauncher:hover { border-color: var(--orange); color: var(--orange); }
 .importLauncher:disabled { cursor: not-allowed; opacity: .45; }
+.permanentRoomCard {
+  margin: 0 11px 11px;
+  padding: 11px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: white;
+}
+.permanentRoomCard > div:first-child { display: flex; align-items: center; justify-content: space-between; }
+.permanentRoomCard span { color: rgba(255,255,255,.55); font-size: 8px; font-weight: 900; letter-spacing: 1px; }
+.permanentRoomCard i { padding: 3px 5px; border-radius: 99px; background: rgba(34,184,137,.16); color: #55dcaf; font-size: 7px; font-style: normal; font-weight: 900; }
+.permanentRoomCard input {
+  width: 100%;
+  margin: 8px 0;
+  padding: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 5px;
+  background: rgba(255,255,255,.1);
+  color: white;
+  font: 500 8px "Be Vietnam Pro", sans-serif;
+  text-overflow: ellipsis;
+}
+.permanentRoomCard > div:last-child { display: flex; gap: 6px; }
+.permanentRoomCard button, .permanentRoomCard a {
+  flex: 1;
+  padding: 7px;
+  cursor: pointer;
+  border: 0;
+  border-radius: 5px;
+  background: var(--yellow, #ffc84a);
+  color: var(--ink);
+  font-size: 8px;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+}
+.permanentRoomCard a { background: rgba(255,255,255,.12); color: white; }
 .questionTree { flex: 1; min-height: 180px; padding: 0 8px 12px; overflow-x: hidden; overflow-y: auto; }
 .treeRootDrop {
   display: grid;
@@ -545,6 +582,7 @@
   .questionTree { max-height: 340px; padding-right: 12px; padding-left: 12px; }
   .sidebarHelp { display: none; }
   .importLauncher { margin-right: 15px; margin-left: 15px; }
+  .permanentRoomCard { margin-right: 15px; margin-left: 15px; }
   .content { padding: 22px 14px 45px; }
   .importSettings { grid-template-columns: 1fr 1fr; }
   .importSettings label:first-child { grid-column: 1 / -1; }

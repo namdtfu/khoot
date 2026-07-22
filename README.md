@@ -11,6 +11,8 @@ Khoot Mini là trò chơi trắc nghiệm realtime cho số lượng học sinh 
 - Nhập nhanh cả bộ đề từ danh sách câu hỏi dạng văn bản.
 - Mỗi câu hỏi gồm nội dung hoặc định nghĩa, đúng 4 lựa chọn và 1 đáp án chính xác.
 - Người quản trị nhập số học sinh, mở phòng và gửi liên kết riêng.
+- Mỗi tài khoản quản trị có một link phòng cố định dùng chung cho cả quản trị viên và học sinh.
+- Mỗi lần mở bộ đề tạo một phiên chơi mới bên trong phòng cố định, nên điểm và thống kê giữa các lần chơi không bị trộn.
 - Học sinh nhập tên, bấm sẵn sàng và trả lời đồng thời trên các máy khác nhau.
 - Đếm ngược 3–2–1, giới hạn thời gian theo từng bộ đề và tự động chuyển câu.
 - Chấm điểm theo đáp án đúng và tốc độ trả lời.

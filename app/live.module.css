@@ -116,6 +116,19 @@
   color: var(--ink);
   font-weight: 900;
 }
+.returnLobbyButton {
+  display: block;
+  margin: 20px auto 0;
+  padding: 12px 16px;
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  font-size: 11px;
+  font-weight: 850;
+  box-shadow: 0 4px 0 #071612;
+}
 
 .playerList { display: flex; flex-direction: column; gap: 8px; }
 .playerCard {

@@ -9,6 +9,8 @@ export type GameRoom = {
   current_question: number;
   question_count: number;
   max_players: number;
+  lobby_token: string | null;
+  lobby_name: string | null;
   question_started_at: string | null;
   reveal_started_at: string | null;
   started_at: string | null;
@@ -58,6 +60,30 @@ export type GameSnapshot = {
   stats: GameStat[];
 };
 
+export type GameLobby = {
+  id: string;
+  public_token: string;
+  name: string;
+  active_game_id: string | null;
+};
+
+export type GameLobbyResolution = {
+  lobby: {
+    id: string | null;
+    public_token: string;
+    name: string;
+  };
+  active_game: {
+    id: string | null;
+    public_token: string;
+    title: string;
+    status: GameStatus;
+    max_players: number;
+    created_at: string;
+  } | null;
+  is_host: boolean;
+};
+
 export const ANSWER_SHAPES = ["▲", "◆", "●", "■"];
 
 export function getRoomToken() {
@@ -73,6 +99,11 @@ export function getBasePath() {
 export function buildPlayerLink(publicToken: string) {
   if (typeof window === "undefined") return "";
   return `${window.location.origin}${getBasePath()}/play/?room=${publicToken}`;
+}
+
+export function buildLobbyLink(lobbyToken: string) {
+  if (typeof window === "undefined") return "";
+  return `${window.location.origin}${getBasePath()}/room/?room=${lobbyToken}`;
 }
 
 export function getErrorMessage(error: unknown) {

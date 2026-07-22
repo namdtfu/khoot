@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { getBasePath, getErrorMessage, type GameSnapshot } from "@/lib/game";
+import { buildLobbyLink, getBasePath, getErrorMessage, type GameLobby, type GameSnapshot } from "@/lib/game";
 import { parseQuestionText } from "@/lib/question-import";
 import QuestionTree, { type TreeFolder, type TreeQuestionSet } from "./QuestionTree";
 import styles from "./admin.module.css";
@@ -89,6 +89,8 @@ export default function AdminPage() {
   const [authReady, setAuthReady] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [lobby, setLobby] = useState<GameLobby | null>(null);
+  const [lobbyCopied, setLobbyCopied] = useState(false);
   const [folders, setFolders] = useState<QuestionFolder[]>([]);
   const [sets, setSets] = useState<QuestionSet[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -120,6 +122,7 @@ export default function AdminPage() {
       : folderChoices,
     [folderChoices, folders, selectedFolder],
   );
+  const lobbyLink = useMemo(() => lobby ? buildLobbyLink(lobby.public_token) : "", [lobby]);
 
   const showError = (error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
@@ -167,6 +170,18 @@ export default function AdminPage() {
     setQuestions((data ?? []) as Question[]);
   }, []);
 
+  const loadLobby = useCallback(async () => {
+    const { data, error } = await supabase.rpc("get_or_create_game_lobby");
+    if (error) throw error;
+    const nextLobby = data as GameLobby;
+    setLobby(nextLobby);
+
+    const requestedLobby = new URLSearchParams(window.location.search).get("lobby");
+    if (requestedLobby && requestedLobby === nextLobby.public_token) {
+      window.location.replace(`${getBasePath()}/room/?room=${nextLobby.public_token}`);
+    }
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -186,6 +201,12 @@ export default function AdminPage() {
     }, 0);
     return () => window.clearTimeout(sessionTimer);
   }, [session, loadLibrary]);
+
+  useEffect(() => {
+    if (!session) return;
+    const lobbyTimer = window.setTimeout(() => void loadLobby().catch(showError), 0);
+    return () => window.clearTimeout(lobbyTimer);
+  }, [session, loadLobby]);
 
   useEffect(() => {
     const selectionTimer = window.setTimeout(() => {
@@ -386,7 +407,7 @@ export default function AdminPage() {
     if (!selectedSet) return;
     setBusy(true); setNotice(null);
     try {
-      const { data, error } = await supabase.rpc("create_game", {
+      const { data, error } = await supabase.rpc("create_game_session", {
         p_question_set_id: selectedSet.id,
         p_max_players: roomSize,
       });
@@ -397,6 +418,13 @@ export default function AdminPage() {
       setNotice({ type: "error", text: getErrorMessage(error) });
       setBusy(false);
     }
+  };
+
+  const copyLobbyLink = async () => {
+    if (!lobbyLink) return;
+    await navigator.clipboard.writeText(lobbyLink);
+    setLobbyCopied(true);
+    window.setTimeout(() => setLobbyCopied(false), 1800);
   };
 
   const openNewQuestion = () => {
@@ -594,6 +622,16 @@ export default function AdminPage() {
             </div>
           </div>
           <button className={styles.importLauncher} onClick={openImporter} disabled={busy}>↓ Nhập từ văn bản</button>
+          {lobby && (
+            <div className={styles.permanentRoomCard}>
+              <div><span>LINK PHÒNG CỐ ĐỊNH</span><i>LIVE</i></div>
+              <input value={lobbyLink} readOnly aria-label="Link phòng cố định" />
+              <div>
+                <button type="button" onClick={copyLobbyLink}>{lobbyCopied ? "Đã chép" : "Sao chép"}</button>
+                <Link href={`/room/?room=${lobby.public_token}`}>Mở link</Link>
+              </div>
+            </div>
+          )}
           <QuestionTree
             folders={folders}
             sets={sets as TreeQuestionSet[]}

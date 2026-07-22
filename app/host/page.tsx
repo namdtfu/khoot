@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   ANSWER_SHAPES,
+  buildLobbyLink,
   buildPlayerLink,
   countdownValue,
   formatResponseTime,
@@ -136,7 +137,11 @@ export default function HostPage() {
   };
 
   const playerLink = useMemo(
-    () => snapshot ? buildPlayerLink(snapshot.room.public_token) : "",
+    () => snapshot
+      ? snapshot.room.lobby_token
+        ? buildLobbyLink(snapshot.room.lobby_token)
+        : buildPlayerLink(snapshot.room.public_token)
+      : "",
     [snapshot],
   );
 
@@ -272,7 +277,7 @@ export default function HostPage() {
           <aside className={styles.sidePanel}>
             {room.status === "waiting" && (
               <div className={styles.linkCard}>
-                <span>LIÊN KẾT DÀNH CHO {room.max_players} HỌC SINH</span>
+                <span>LINK PHÒNG CỐ ĐỊNH · QUẢN TRỊ VÀ {room.max_players} HỌC SINH</span>
                 <div className={styles.linkRow}><input readOnly value={playerLink} /><button onClick={copyLink}>{copied ? "Đã chép" : "Sao chép"}</button></div>
               </div>
             )}
