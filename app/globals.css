@@ -64,6 +64,8 @@ button { -webkit-tap-highlight-color: transparent; }
   padding: 9px 13px;
   border: 1.5px solid rgba(19,42,37,.2);
   border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
 }
 .welcome-grid {
   position: relative;

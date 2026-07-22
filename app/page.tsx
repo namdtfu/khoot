@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 type Player = { id: number; name: string; color: string; score: number };
 type Question = { word: string; sound: string; prompt: string; options: string[]; correct: number; example: string };
@@ -74,7 +75,7 @@ export default function Home() {
       <main className="welcome-shell">
         <header className="topbar">
           <a className="brand" href="#" aria-label="Khoot Mini - trang ch?">KHOOT<span>!</span></a>
-          <span className="round-label">VOCAB SPRINT</span>
+          <Link className="round-label" href="/admin">QU?N L? B? ?? ?</Link>
         </header>
         <section className="welcome-grid">
           <div className="hero-copy">
