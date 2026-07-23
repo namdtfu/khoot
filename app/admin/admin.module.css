@@ -137,6 +137,7 @@
 .headerTitle { display: flex; flex-direction: column; gap: 2px; }
 .headerTitle span { color: var(--yellow); }
 .headerTitle strong { color: white; font-size: 14px; }
+.headerLinks { display: flex; align-items: center; gap: 8px; }
 .account { display: flex; align-items: center; gap: 15px; }
 .historyLink {
   margin-left: 0;

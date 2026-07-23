@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { buildLobbyLink, getBasePath, getErrorMessage, type GameLobby, type GameSnapshot } from "@/lib/game";
 import { downloadTextFile, safeFilename } from "@/lib/export";
 import { parseQuestionText } from "@/lib/question-import";
+import { getMyProfile } from "@/lib/study/api";
 import QuestionTree, { type TreeFolder, type TreeQuestionSet } from "./QuestionTree";
 import styles from "./admin.module.css";
 
@@ -94,6 +95,7 @@ function isFolderInside(folderId: string, ancestorId: string, folders: QuestionF
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [adminAccess, setAdminAccess] = useState<"checking" | "allowed" | "denied">("checking");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [lobby, setLobby] = useState<GameLobby | null>(null);
@@ -208,28 +210,51 @@ export default function AdminPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      setAdminAccess("checking");
       setAuthReady(true);
     });
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      setAdminAccess("checking");
       setAuthReady(true);
     });
     return () => data.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
+    if (!session) return;
+    const accessTimer = window.setTimeout(() => {
+      void getMyProfile()
+        .then((profile) => {
+          if (profile.role === "admin") {
+            setAdminAccess("allowed");
+            return;
+          }
+          setAdminAccess("denied");
+          window.location.replace(`${getBasePath()}/learn/`);
+        })
+        .catch((error) => {
+          setAdminAccess("denied");
+          showError(error);
+        });
+    }, 0);
+    return () => window.clearTimeout(accessTimer);
+  }, [session]);
+
+  useEffect(() => {
     const sessionTimer = window.setTimeout(() => {
       if (!session) { setFolders([]); setSets([]); setSelectedId(null); setSelectedFolderId(null); return; }
+      if (adminAccess !== "allowed") return;
       loadLibrary(session.user.id).catch(showError);
     }, 0);
     return () => window.clearTimeout(sessionTimer);
-  }, [session, loadLibrary]);
+  }, [session, adminAccess, loadLibrary]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session || adminAccess !== "allowed") return;
     const lobbyTimer = window.setTimeout(() => void loadLobby().catch(showError), 0);
     return () => window.clearTimeout(lobbyTimer);
-  }, [session, loadLobby]);
+  }, [session, adminAccess, loadLobby]);
 
   useEffect(() => {
     const selectionTimer = window.setTimeout(() => {
@@ -710,12 +735,24 @@ export default function AdminPage() {
     );
   }
 
+  if (adminAccess !== "allowed") {
+    return (
+      <main className={styles.loading}>
+        <span>KHOOT!</span>
+        <p>{adminAccess === "denied" ? "Đang chuyển đến khu tự học…" : "Đang kiểm tra quyền quản trị…"}</p>
+      </main>
+    );
+  }
+
   return (
     <main className={styles.dashboard}>
       <header className={styles.header}>
         <Link className={styles.logo} href="/">KHOOT<span>!</span></Link>
         <div className={styles.headerTitle}><span>TRANG QUẢN TRỊ</span><strong>Ngân hàng câu hỏi</strong></div>
-        <Link className={styles.historyLink} href="/history">Lịch sử thi</Link>
+        <nav className={styles.headerLinks}>
+          <Link className={styles.historyLink} href="/learn">Khu tự học</Link>
+          <Link className={styles.historyLink} href="/history">Lịch sử thi</Link>
+        </nav>
         <div className={styles.account}>
           <div><span>ĐANG ĐĂNG NHẬP</span><strong>{session.user.email}</strong></div>
           <button onClick={signOut}>Đăng xuất</button>
@@ -931,7 +968,7 @@ export default function AdminPage() {
                   <strong className={selectedSet.is_published ? styles.metricPublished : styles.metricDraft}>
                     {selectedSet.is_published ? "Sẵn sàng" : "Bản nháp"}
                   </strong>
-                  <small>{selectedSet.is_published ? "có thể mở phòng" : "chưa thể mở phòng"}</small>
+                  <small>{selectedSet.is_published ? "mở phòng và hiện trong khu tự học" : "chưa thể mở phòng hoặc tự học"}</small>
                 </article>
               </section>
 
@@ -1000,7 +1037,7 @@ export default function AdminPage() {
                 </div>
                 <label className={styles.switchRow}>
                   <input type="checkbox" checked={packForm.is_published} onChange={(event) => setPackForm({ ...packForm, is_published: event.target.checked })} />
-                  <span><i /><b>{packForm.is_published ? "Đã sẵn sàng sử dụng" : "Đang ở chế độ bản nháp"}</b><small>Bạn có thể thay đổi trạng thái bất cứ lúc nào.</small></span>
+                  <span><i /><b>{packForm.is_published ? "Đã sẵn sàng sử dụng" : "Đang ở chế độ bản nháp"}</b><small>Bộ đề xuất bản sẽ xuất hiện trong khu tự học và có thể dùng để mở phòng.</small></span>
                 </label>
               </form>
 

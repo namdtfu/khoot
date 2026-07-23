@@ -8,8 +8,8 @@ import "@fontsource/be-vietnam-pro/900.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Khoot Mini — Đấu trường kiến thức",
-  description: "Trò chơi trắc nghiệm realtime với số học sinh tùy chọn cùng trang quản trị bộ câu hỏi.",
+  title: "Khoot Mini — Học và thi theo cách của bạn",
+  description: "Flashcard, trắc nghiệm tự luyện, ôn cách quãng và phòng thi realtime trong cùng một nền tảng.",
 };
 
 export default function RootLayout({

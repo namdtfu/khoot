@@ -55,6 +55,11 @@ button { -webkit-tap-highlight-color: transparent; }
   text-decoration: none;
 }
 .brand span { color: var(--orange); }
+.home-nav, .hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .round-label, .eyebrow {
   font-size: 11px;
   font-weight: 900;
@@ -114,10 +119,22 @@ button { -webkit-tap-highlight-color: transparent; }
   transition: transform .18s ease, box-shadow .18s ease;
 }
 .primary-button { display: inline-block; min-width: 185px; padding: 16px 19px; text-align: left; text-decoration: none; }
+.secondary-button {
+  display: inline-block;
+  padding: 14px 17px;
+  border: 1.5px solid rgba(19,42,37,.22);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+.secondary-button:hover { border-color: var(--ink); background: rgba(255,255,255,.55); }
 .primary-button span { float: right; color: var(--yellow); font-size: 19px; }
 .primary-button:hover, .next-button:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #071612; }
 .primary-button:active, .next-button:active { transform: translateY(3px); box-shadow: 0 3px 0 #071612; }
-.hero-copy small { display: inline-block; margin-left: 14px; color: #7f8c88; font-size: 11px; }
+.hero-copy small { display: block; margin-top: 16px; color: #7f8c88; font-size: 11px; }
 .lobby-card {
   width: min(100%, 430px);
   margin-left: auto;
@@ -472,6 +489,8 @@ button { -webkit-tap-highlight-color: transparent; }
 
 @media (max-width: 760px) {
   .topbar, .game-header { width: min(100% - 28px, 1180px); }
+  .home-nav { gap: 5px; }
+  .home-nav .round-label { padding: 8px; font-size: 8px; letter-spacing: 1px; }
   .welcome-grid {
     grid-template-columns: 1fr;
     width: min(100% - 32px, 560px);
@@ -479,6 +498,8 @@ button { -webkit-tap-highlight-color: transparent; }
   }
   .hero-copy h1 { font-size: clamp(48px, 15vw, 70px); letter-spacing: -3px; }
   .hero-copy p { margin: 22px 0; }
+  .hero-actions { align-items: stretch; flex-direction: column; }
+  .hero-actions a { width: 100%; text-align: center; }
   .hero-copy small { display: block; margin: 14px 0 0; }
   .lobby-card { margin: 0 auto; transform: none; }
   .question-counter { display: none; }
