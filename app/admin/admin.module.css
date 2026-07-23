@@ -127,6 +127,16 @@
 .headerTitle { display: flex; flex-direction: column; gap: 2px; }
 .headerTitle strong { font-size: 14px; }
 .account { display: flex; align-items: center; gap: 15px; }
+.historyLink {
+  margin-left: auto;
+  padding: 9px 12px;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 8px;
+  color: white;
+  font-size: 10px;
+  font-weight: 850;
+  text-decoration: none;
+}
 .account > div { display: flex; flex-direction: column; gap: 2px; text-align: right; }
 .account strong { max-width: 230px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; }
 .account button, .deleteButton, .textButton, .cardActions button, .editorFooter button, .closeButton {
@@ -357,6 +367,26 @@
 .deleteButton { color: #b43c2a; }
 .saveButton { border: 0; box-shadow: 0 3px 0 #071612; }
 .packGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.gameOptions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.gameOptions label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  padding: 11px;
+  border: 1px solid #ddd6cb;
+  border-radius: 9px;
+  background: #fffdf8;
+}
+.gameOptions input[type="checkbox"] { width: 18px; height: 18px; }
+.gameOptions span { display: flex; flex: 1; flex-direction: column; gap: 3px; }
+.gameOptions small { color: #7b8984; font-size: 8px; font-weight: 500; }
+.gameOptions select { width: 130px; }
 .fullField { grid-column: 1 / -1; }
 .packSettings textarea, .questionEditor textarea { resize: vertical; }
 .packSettings label > small { color: #87938f; font-size: 9px; font-weight: 500; }
@@ -573,6 +603,7 @@
 .answerPills span { padding: 5px 8px; border-radius: 5px; background: #ebe5db; color: #6c7a75; font-size: 9px; }
 .answerPills .correctPill { background: #d9f2e9; color: #147054; font-weight: 850; }
 .cardActions { display: flex; align-items: flex-start; gap: 5px; }
+.cardActions { flex-wrap: wrap; justify-content: flex-end; }
 .cardActions button { padding: 7px 9px; }
 .cardActions button:last-child { color: #ad3e2c; }
 .emptyQuestions, .noSelection { padding: 55px 20px; text-align: center; }
@@ -623,7 +654,7 @@
   .topActions { align-items: stretch; flex-direction: column; }
   .roomSizeControl { justify-content: space-between; }
   .openRoomButton, .addQuestionButton { padding: 10px 12px; }
-  .packGrid, .optionsGrid { grid-template-columns: 1fr; }
+  .packGrid, .optionsGrid, .gameOptions { grid-template-columns: 1fr; }
   .importSettings { grid-template-columns: 1fr; }
   .importSettings label:first-child { grid-column: auto; }
   .importFooter { align-items: flex-start; flex-direction: column; }

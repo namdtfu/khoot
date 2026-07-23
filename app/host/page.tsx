@@ -70,7 +70,7 @@ export default function HostPage() {
       .channel(`game:${token}`, { config: { private: false } })
       .on("broadcast", { event: "state" }, () => void loadRoom())
       .subscribe();
-    const fallback = window.setInterval(() => void loadRoom(), 5000);
+    const fallback = window.setInterval(() => void loadRoom(), 2000);
     return () => {
       window.clearInterval(fallback);
       void supabase.removeChannel(channel);
@@ -82,62 +82,63 @@ export default function HostPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const runTransition = useCallback(async (name: "activate_game" | "reveal_game" | "advance_game") => {
-    if (!roomId || transitioning.current) return;
-    transitioning.current = true;
-    const { data, error: transitionError } = await supabase.rpc(name, { p_room_id: roomId });
-    if (transitionError) setError(getErrorMessage(transitionError));
-    else {
-      setSnapshot(data as GameSnapshot);
-      setError("");
-    }
-    transitioning.current = false;
-  }, [roomId]);
-
   const remaining = snapshot
-    ? secondsRemaining(
-      snapshot.room.question_started_at,
-      snapshot.room.current_time_limit_seconds ?? snapshot.room.time_limit_seconds,
-      now,
-    )
+    ? snapshot.room.status === "paused" && snapshot.room.paused_remaining_seconds != null
+      ? snapshot.room.paused_remaining_seconds
+      : secondsRemaining(
+        snapshot.room.question_started_at,
+        snapshot.room.current_time_limit_seconds ?? snapshot.room.time_limit_seconds,
+        now,
+      )
     : 0;
-  const allAnswered = Boolean(
-    snapshot
-    && snapshot.players.length === snapshot.room.max_players
-    && snapshot.players.every((player) => player.answered)
-  );
-
-  useEffect(() => {
-    if (!snapshot || transitioning.current) return;
-    const room = snapshot.room;
-    let transition: "activate_game" | "reveal_game" | "advance_game" | null = null;
-    if (room.status === "countdown" && room.question_started_at
-      && now >= new Date(room.question_started_at).getTime()) {
-      transition = "activate_game";
-    } else if (room.status === "playing" && (allAnswered || remaining <= 0)) {
-      transition = "reveal_game";
-    } else if (room.status === "reveal" && room.reveal_started_at
-      && now >= new Date(room.reveal_started_at).getTime() + 3000) {
-      transition = "advance_game";
-    }
-    if (!transition) return;
-    const transitionTimer = window.setTimeout(() => void runTransition(transition), 0);
-    return () => window.clearTimeout(transitionTimer);
-  }, [snapshot, now, allAnswered, remaining, runTransition]);
 
   const canStart = Boolean(
     snapshot
     && snapshot.players.length === snapshot.room.max_players
     && snapshot.players.every((player) => player.is_ready)
   );
+  const canStartCurrent = Boolean(
+    snapshot
+    && snapshot.players.length > 0
+    && snapshot.players.length < snapshot.room.max_players
+    && snapshot.players.every((player) => player.is_ready)
+  );
 
-  const startGame = async () => {
-    if (!roomId || !canStart) return;
+  const startGame = async (useCurrentPlayers = false) => {
+    if (!roomId || (!canStart && !useCurrentPlayers)) return;
     transitioning.current = true;
-    const { data, error: startError } = await supabase.rpc("start_game", {
+    const { data, error: startError } = await supabase.rpc(useCurrentPlayers ? "start_game_now" : "start_game", {
       p_room_id: roomId,
     });
     if (startError) setError(getErrorMessage(startError));
+    else setSnapshot(data as GameSnapshot);
+    transitioning.current = false;
+  };
+
+  const runHostAction = async (
+    name: "pause_game" | "resume_game" | "add_game_time" | "skip_game_question",
+    args: Record<string, unknown> = {},
+  ) => {
+    if (!roomId || transitioning.current) return;
+    if (name === "skip_game_question" && !window.confirm("Bỏ qua câu hiện tại và chuyển sang câu tiếp theo?")) return;
+    transitioning.current = true;
+    const { data, error: actionError } = await supabase.rpc(name, { p_room_id: roomId, ...args });
+    if (actionError) setError(getErrorMessage(actionError));
+    else {
+      setSnapshot(data as GameSnapshot);
+      setError("");
+    }
+    transitioning.current = false;
+  };
+
+  const removePlayer = async (playerId: string, playerName: string) => {
+    if (!roomId || transitioning.current || !window.confirm("Mời " + playerName + " ra khỏi phòng?")) return;
+    transitioning.current = true;
+    const { data, error: removeError } = await supabase.rpc("remove_game_player", {
+      p_room_id: roomId,
+      p_player_id: playerId,
+    });
+    if (removeError) setError(getErrorMessage(removeError));
     else setSnapshot(data as GameSnapshot);
     transitioning.current = false;
   };
@@ -239,10 +240,15 @@ export default function HostPage() {
           <span className={styles.countdownLabel}>PHÒNG ĐANG MỞ</span>
           <h2>Chờ đủ {room.max_players} học sinh sẵn sàng</h2>
           <p>{snapshot.players.length}/{room.max_players} em đã vào phòng · {snapshot.players.filter((player) => player.is_ready).length}/{room.max_players} đã sẵn sàng</p>
-          <button className={styles.startButton} disabled={!canStart} onClick={startGame}>
+          <button className={styles.startButton} disabled={!canStart} onClick={() => void startGame(false)}>
             {canStart ? "Bắt đầu — 3, 2, 1!" : "Chưa thể bắt đầu"}
           </button>
-          <p className={styles.helper}>Nút bắt đầu sẽ mở khi đủ {room.max_players} em và tất cả đã bấm sẵn sàng.</p>
+          {canStartCurrent && (
+            <button className={styles.startCurrentButton} onClick={() => void startGame(true)}>
+              Bắt đầu với {snapshot.players.length} học sinh hiện tại
+            </button>
+          )}
+          <p className={styles.helper}>Có thể chờ đủ số lượng đã đặt, hoặc bắt đầu sớm khi tất cả học sinh hiện tại đã sẵn sàng.</p>
         </div>
       );
     }
@@ -284,6 +290,7 @@ export default function HostPage() {
 
     if (!question) return <div className={styles.loading}><p>Đang đồng bộ câu hỏi…</p></div>;
     const revealed = room.status === "reveal";
+    const paused = room.status === "paused";
 
     return (
       <>
@@ -292,10 +299,11 @@ export default function HostPage() {
             <span className={styles.questionNumber}>CÂU {room.current_question + 1} / {room.question_count}</span>
             <div className={styles.progress}><i style={{ width: `${((room.current_question + 1) / room.question_count) * 100}%` }} /></div>
           </div>
-          <div className={`${styles.timer} ${remaining <= 5 && !revealed ? styles.urgent : ""}`}>
-            {revealed ? "✓" : Math.ceil(remaining)}
+          <div className={`${styles.timer} ${remaining <= 5 && !revealed && !paused ? styles.urgent : ""}`}>
+            {revealed ? "✓" : paused ? "Ⅱ" : Math.ceil(remaining)}
           </div>
         </div>
+        {paused && <div className={styles.pauseBanner}><strong>Đã tạm dừng</strong><span>Còn {Math.ceil(remaining)} giây khi tiếp tục.</span></div>}
         {revealed && (
           <div className={styles.revealBanner}>
             <span>✓</span>
@@ -315,7 +323,7 @@ export default function HostPage() {
           ))}
         </div>
         <div className={styles.answerProgress}>
-          <span>{revealed ? "Đang hiển thị đáp án" : "Đang nhận câu trả lời realtime"}</span>
+          <span>{paused ? "Đang tạm dừng nhận câu trả lời" : revealed ? "Đang hiển thị đáp án" : "Đang nhận câu trả lời realtime"}</span>
           <strong>{snapshot.players.filter((player) => player.answered).length}/{room.max_players} đã trả lời</strong>
         </div>
       </>
@@ -333,8 +341,8 @@ export default function HostPage() {
           <div><span className={styles.eyebrow}>PHÒNG THI REALTIME</span><h1>{room.title}</h1><p>{room.status === "waiting" ? "Chia sẻ liên kết để học sinh tham gia." : "Máy quản trị đang tự động điều phối trận đấu."}</p></div>
           <div className={styles.roomControls}>
             <div className={styles.timeChip}>
-              <b>{room.status === "playing" || room.status === "reveal" ? room.current_time_limit_seconds : room.time_limit_seconds}</b>
-              {room.status === "playing" || room.status === "reveal" ? "giây · câu hiện tại" : "giây · mặc định"}
+              <b>{room.status === "playing" || room.status === "paused" || room.status === "reveal" ? room.current_time_limit_seconds : room.time_limit_seconds}</b>
+              {room.status === "playing" || room.status === "paused" || room.status === "reveal" ? "giây · câu hiện tại" : "giây · mặc định"}
             </div>
             <button className={styles.closeRoomButton} type="button" onClick={closeRoom} disabled={closing}>
               {closing ? "Đang đóng…" : "Đóng phòng"}
@@ -342,6 +350,19 @@ export default function HostPage() {
           </div>
         </div>
         {error && <p className={styles.errorMessage}>{error}</p>}
+        {["playing", "paused", "reveal"].includes(room.status) && (
+          <section className={styles.gameControlBar} aria-label="Điều khiển phiên thi">
+            {room.status === "paused" ? (
+              <button onClick={() => void runHostAction("resume_game")}>▶ Tiếp tục</button>
+            ) : room.status === "playing" ? (
+              <button onClick={() => void runHostAction("pause_game")}>Ⅱ Tạm dừng</button>
+            ) : null}
+            {(room.status === "playing" || room.status === "paused") && (
+              <button onClick={() => void runHostAction("add_game_time", { p_seconds: 10 })}>+10 giây</button>
+            )}
+            <button className={styles.skipButton} onClick={() => void runHostAction("skip_game_question")}>Bỏ qua câu →</button>
+          </section>
+        )}
         <section className={styles.classOverview} aria-label="Tổng quan lớp học">
           {room.status === "waiting" ? (
             <>
@@ -429,9 +450,11 @@ export default function HostPage() {
                       <i>{player.name[0].toUpperCase()}</i>
                       <div>
                         <strong>{player.name}</strong><br />
-                        <small>{room.status === "countdown" ? "Đang chuẩn bị" : player.is_ready ? "Sẵn sàng" : "Chưa sẵn sàng"}</small>
+                        <small>{room.status === "countdown" ? "Đang chuẩn bị" : player.is_ready ? "Sẵn sàng" : "Chưa sẵn sàng"} · {player.is_online ? "Đang online" : "Mất kết nối"}</small>
                       </div>
-                      <span>{room.status === "countdown" ? "3" : player.is_ready ? "✓" : "·"}</span>
+                      {room.status === "waiting" ? (
+                        <button className={styles.removePlayerButton} onClick={() => void removePlayer(player.id, player.name)} title="Mời khỏi phòng">×</button>
+                      ) : <span>{room.status === "countdown" ? "3" : player.is_ready ? "✓" : "·"}</span>}
                     </div>
                   );
                 }
@@ -445,6 +468,10 @@ export default function HostPage() {
                 const needsSupport = answeredCount >= 2 && accuracy < 50;
                 const statusLabel = room.status === "finished"
                   ? "Hoàn thành"
+                  : !player.is_online
+                    ? "Mất kết nối"
+                    : room.status === "paused"
+                      ? "Tạm dừng"
                   : room.status === "reveal"
                     ? player.answered ? "Đã trả lời" : "Bỏ trống"
                     : player.answered ? "Đã trả lời" : "Đang làm";

@@ -1,4 +1,6 @@
-export type GameStatus = "waiting" | "countdown" | "playing" | "reveal" | "finished";
+export type GameStatus = "waiting" | "countdown" | "playing" | "paused" | "reveal" | "finished";
+
+export type ScoringMode = "speed" | "accuracy";
 
 export type GameRoom = {
   id: string;
@@ -16,6 +18,10 @@ export type GameRoom = {
   reveal_started_at: string | null;
   started_at: string | null;
   finished_at: string | null;
+  paused_remaining_seconds: number | null;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  scoring_mode: ScoringMode;
 };
 
 export type GamePlayer = {
@@ -24,6 +30,7 @@ export type GamePlayer = {
   is_ready: boolean;
   score: number;
   answered: boolean;
+  is_online: boolean;
 };
 
 export type GameQuestion = {
@@ -78,6 +85,20 @@ export type GameSnapshot = {
   self: GameSelf | null;
   stats: GameStat[];
   history?: GameHistoryQuestion[];
+};
+
+export type GameHistorySummary = {
+  id: string;
+  title: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  question_count: number;
+  player_count: number;
+  average_score: number;
+  answer_count: number;
+  correct_count: number;
+  scoring_mode: ScoringMode;
 };
 
 export type GameLobby = {

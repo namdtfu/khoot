@@ -2,6 +2,7 @@ export type ImportedQuestion = {
   prompt: string;
   options: [string, string, string, string];
   correct_option: number;
+  time_limit_seconds: number | null;
   sourceLabel: string;
 };
 
@@ -29,6 +30,7 @@ type OptionMarker = {
 
 const QUESTION_MARKER = /\b(?:câu|cau)\s*(\d+)\s*[:.)-]\s*/giu;
 const ANSWER_DIRECTIVE = /(?:^|\s)(?:đáp\s*án(?:\s*đúng)?|dap\s*an(?:\s*dung)?|đ\.?\s*a\.?|d\.?\s*a\.?|answer)\s*[:=-]\s*([A-D1-4])\b/giu;
+const TIME_DIRECTIVE = /(?:^|\s)(?:thời\s*gian|thoi\s*gian|time)\s*[:=-]\s*(\d{1,3})\s*(?:giây|giay|s|seconds?)?\b/giu;
 const OPTION_MARKER = /(?:^|\s)(\*)?\s*([A-D])\s*[.):]\s*/giu;
 
 function compactWhitespace(value: string) {
@@ -76,7 +78,9 @@ export function parseQuestionText(source: string): QuestionImportResult {
   for (const block of blocks) {
     const answerMatches = Array.from(block.body.matchAll(ANSWER_DIRECTIVE));
     const declaredAnswers = [...new Set(answerMatches.map((match) => answerIndex(match[1])))];
-    const content = block.body.replace(ANSWER_DIRECTIVE, " ").trim();
+    const timeMatches = Array.from(block.body.matchAll(TIME_DIRECTIVE));
+    const declaredTimes = [...new Set(timeMatches.map((match) => Number(match[1])))];
+    const content = block.body.replace(ANSWER_DIRECTIVE, " ").replace(TIME_DIRECTIVE, " ").trim();
     const optionMarkers = Array.from(content.matchAll(OPTION_MARKER)).map<OptionMarker>((match) => ({
       index: match.index ?? 0,
       end: (match.index ?? 0) + match[0].length,
@@ -114,6 +118,16 @@ export function parseQuestionText(source: string): QuestionImportResult {
       continue;
     }
 
+    if (declaredTimes.length > 1) {
+      errors.push({ sourceLabel: block.sourceLabel, message: "Câu hỏi có nhiều thời gian riêng khác nhau." });
+      continue;
+    }
+
+    if (declaredTimes[0] !== undefined && (declaredTimes[0] < 5 || declaredTimes[0] > 120)) {
+      errors.push({ sourceLabel: block.sourceLabel, message: "Thời gian riêng phải từ 5 đến 120 giây." });
+      continue;
+    }
+
     const starredAnswers = sequence
       .map((marker, index) => marker.starred ? index : -1)
       .filter((index) => index >= 0);
@@ -142,6 +156,7 @@ export function parseQuestionText(source: string): QuestionImportResult {
       prompt,
       options: options as [string, string, string, string],
       correct_option: declaredAnswer ?? starredAnswer,
+      time_limit_seconds: declaredTimes[0] ?? null,
       sourceLabel: block.sourceLabel,
     });
   }

@@ -5,6 +5,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { buildLobbyLink, getBasePath, getErrorMessage, type GameLobby, type GameSnapshot } from "@/lib/game";
+import { downloadTextFile, safeFilename } from "@/lib/export";
 import { parseQuestionText } from "@/lib/question-import";
 import QuestionTree, { type TreeFolder, type TreeQuestionSet } from "./QuestionTree";
 import styles from "./admin.module.css";
@@ -21,6 +22,9 @@ type QuestionSet = {
   position: number;
   created_at: string;
   updated_at: string;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  scoring_mode: "speed" | "accuracy";
 };
 
 type QuestionFolder = TreeFolder & {
@@ -52,6 +56,7 @@ B. Tạm biệt
 C. Cảm ơn
 D. Xin lỗi
 Đáp án: A
+Thời gian: 15 giây
 
 Câu 2: Từ “goodbye” có nghĩa là gì?
 A. Chào buổi sáng
@@ -98,7 +103,16 @@ export default function AdminPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [packForm, setPackForm] = useState({ title: "", topic: "", description: "", is_published: false, time_limit_seconds: 20 });
+  const [packForm, setPackForm] = useState({
+    title: "",
+    topic: "",
+    description: "",
+    is_published: false,
+    time_limit_seconds: 20,
+    shuffle_questions: false,
+    shuffle_options: false,
+    scoring_mode: "speed" as "speed" | "accuracy",
+  });
   const [roomSize, setRoomSize] = useState(5);
   const [questionForm, setQuestionForm] = useState({ ...EMPTY_QUESTION });
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -219,6 +233,9 @@ export default function AdminPage() {
         description: selectedSet.description,
         is_published: selectedSet.is_published,
         time_limit_seconds: selectedSet.time_limit_seconds,
+        shuffle_questions: selectedSet.shuffle_questions,
+        shuffle_options: selectedSet.shuffle_options,
+        scoring_mode: selectedSet.scoring_mode,
       });
       setImportOpen(false);
       setEditorOpen(false);
@@ -485,6 +502,7 @@ export default function AdminPage() {
         prompt: question.prompt,
         options: question.options,
         correct_option: question.correct_option,
+        time_limit_seconds: question.time_limit_seconds,
         position,
       }));
 
@@ -573,6 +591,74 @@ export default function AdminPage() {
     finally { setBusy(false); }
   };
 
+  const moveQuestion = async (question: Question, direction: -1 | 1) => {
+    if (!selectedSet || busy) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const { error } = await supabase.rpc("move_question", {
+        p_question_id: question.id,
+        p_direction: direction,
+      });
+      if (error) throw error;
+      await loadQuestions(selectedSet.id);
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const duplicateQuestion = async (question: Question) => {
+    if (!selectedSet || busy) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const { error } = await supabase.rpc("duplicate_question", { p_question_id: question.id });
+      if (error) throw error;
+      await loadQuestions(selectedSet.id);
+      setNotice({ type: "success", text: "Đã nhân bản câu hỏi." });
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const duplicateSet = async () => {
+    if (!selectedSet || !session || busy) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      const { data, error } = await supabase.rpc("duplicate_question_set", { p_set_id: selectedSet.id });
+      if (error) throw error;
+      await loadLibrary(session.user.id);
+      setSelectedId(String(data));
+      setNotice({ type: "success", text: "Đã nhân bản bộ đề thành một bản nháp mới." });
+    } catch (error) { showError(error); }
+    finally { setBusy(false); }
+  };
+
+  const exportSet = () => {
+    if (!selectedSet) return;
+    const backup = {
+      format: "khoot-question-set",
+      version: 1,
+      exported_at: new Date().toISOString(),
+      question_set: {
+        title: selectedSet.title,
+        topic: selectedSet.topic,
+        description: selectedSet.description,
+        time_limit_seconds: selectedSet.time_limit_seconds,
+        shuffle_questions: selectedSet.shuffle_questions,
+        shuffle_options: selectedSet.shuffle_options,
+        scoring_mode: selectedSet.scoring_mode,
+      },
+      questions: questions.map(({ prompt, options, correct_option, time_limit_seconds, position }) => ({
+        prompt, options, correct_option, time_limit_seconds, position,
+      })),
+    };
+    downloadTextFile(
+      JSON.stringify(backup, null, 2),
+      safeFilename(selectedSet.title) + ".khoot.json",
+      "application/json;charset=utf-8",
+    );
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setNotice(null);
@@ -622,6 +708,7 @@ export default function AdminPage() {
       <header className={styles.header}>
         <Link className={styles.logo} href="/">KHOOT<span>!</span></Link>
         <div className={styles.headerTitle}><span>TRANG QUẢN TRỊ</span><strong>Ngân hàng câu hỏi</strong></div>
+        <Link className={styles.historyLink} href="/history">Lịch sử thi</Link>
         <div className={styles.account}>
           <div><span>ĐANG ĐĂNG NHẬP</span><strong>{session.user.email}</strong></div>
           <button onClick={signOut}>Đăng xuất</button>
@@ -687,7 +774,7 @@ export default function AdminPage() {
               </div>
               <div className={styles.importGuide}>
                 <strong>Định dạng:</strong> Câu 1: … A. … B. … C. … D. … Đáp án: B
-                <span>Có thể viết liền trên một dòng hoặc xuống dòng. Bạn cũng có thể đặt dấu * trước lựa chọn đúng.</span>
+                <span>Có thể viết liền hoặc xuống dòng, đặt dấu * trước lựa chọn đúng, và thêm “Thời gian: 30 giây” cho câu khó.</span>
               </div>
               <label className={styles.importTextLabel}>Danh sách câu hỏi
                 <textarea
@@ -722,7 +809,7 @@ export default function AdminPage() {
                         {importPreview.questions.slice(0, 3).map((question, index) => (
                           <article key={`${question.sourceLabel}-${index}`}>
                             <b>{index + 1}. {question.prompt}</b>
-                            <span>Đáp án đúng: {String.fromCharCode(65 + question.correct_option)}. {question.options[question.correct_option]}</span>
+                            <span>Đáp án đúng: {String.fromCharCode(65 + question.correct_option)}. {question.options[question.correct_option]} · {question.time_limit_seconds ? question.time_limit_seconds + " giây" : "thời gian mặc định"}</span>
                           </article>
                         ))}
                         {importPreview.questions.length > 3 && <small>Và {importPreview.questions.length - 3} câu hợp lệ khác…</small>}
@@ -797,6 +884,7 @@ export default function AdminPage() {
                     <input
                       type="number"
                       min={1}
+                      max={100}
                       step={1}
                       value={roomSize}
                       onChange={(event) => setRoomSize(Number(event.target.value))}
@@ -806,7 +894,7 @@ export default function AdminPage() {
                   <button
                     className={styles.openRoomButton}
                     onClick={createGameRoom}
-                    disabled={busy || !selectedSet.is_published || questions.length === 0 || !Number.isInteger(roomSize) || roomSize < 1}
+                    disabled={busy || !selectedSet.is_published || questions.length === 0 || !Number.isInteger(roomSize) || roomSize < 1 || roomSize > 100}
                     title={!selectedSet.is_published ? "Hãy xuất bản bộ đề trước" : questions.length === 0 ? "Hãy thêm câu hỏi trước" : ""}
                   >
                     ▶ Mở phòng
@@ -819,6 +907,8 @@ export default function AdminPage() {
                 <div className={styles.sectionTitle}>
                   <div><span>THÔNG TIN CHUNG</span><strong>Cấu hình bộ đề</strong></div>
                   <div className={styles.formActions}>
+                    <button type="button" onClick={exportSet} disabled={busy}>Xuất JSON</button>
+                    <button type="button" onClick={() => void duplicateSet()} disabled={busy}>Nhân bản</button>
                     <button className={styles.deleteButton} type="button" onClick={deleteSet} disabled={busy}>Xóa</button>
                     <button className={styles.saveButton} type="submit" disabled={busy}>Lưu thay đổi</button>
                   </div>
@@ -857,6 +947,23 @@ export default function AdminPage() {
                   </label>
                   <label className={styles.fullField}>Mô tả
                     <textarea value={packForm.description} onChange={(event) => setPackForm({ ...packForm, description: event.target.value })} rows={2} placeholder="Mô tả ngắn để dễ nhận biết bộ đề" />
+                  </label>
+                </div>
+                <div className={styles.gameOptions}>
+                  <label>
+                    <input type="checkbox" checked={packForm.shuffle_questions} onChange={(event) => setPackForm({ ...packForm, shuffle_questions: event.target.checked })} />
+                    <span><b>Xáo trộn câu hỏi</b><small>Mỗi phiên có thứ tự câu khác nhau.</small></span>
+                  </label>
+                  <label>
+                    <input type="checkbox" checked={packForm.shuffle_options} onChange={(event) => setPackForm({ ...packForm, shuffle_options: event.target.checked })} />
+                    <span><b>Xáo trộn đáp án</b><small>Đáp án đúng tự đổi vị trí an toàn.</small></span>
+                  </label>
+                  <label>
+                    <span><b>Cách tính điểm</b><small>Ưu tiên tốc độ hoặc chỉ tính đúng/sai.</small></span>
+                    <select value={packForm.scoring_mode} onChange={(event) => setPackForm({ ...packForm, scoring_mode: event.target.value as "speed" | "accuracy" })}>
+                      <option value="speed">Đúng và nhanh</option>
+                      <option value="accuracy">Chỉ cần đúng</option>
+                    </select>
                   </label>
                 </div>
                 <label className={styles.switchRow}>
@@ -931,7 +1038,13 @@ export default function AdminPage() {
                           {question.options.map((option, optionIndex) => <span key={optionIndex} className={optionIndex === question.correct_option ? styles.correctPill : ""}>{String.fromCharCode(65 + optionIndex)}. {option}{optionIndex === question.correct_option && " ✓"}</span>)}
                         </div>
                       </div>
-                      <div className={styles.cardActions}><button onClick={() => openQuestion(question)}>Sửa</button><button onClick={() => deleteQuestion(question)}>Xóa</button></div>
+                      <div className={styles.cardActions}>
+                        <button disabled={busy || index === 0} onClick={() => void moveQuestion(question, -1)} title="Đưa lên">↑</button>
+                        <button disabled={busy || index === questions.length - 1} onClick={() => void moveQuestion(question, 1)} title="Đưa xuống">↓</button>
+                        <button disabled={busy} onClick={() => void duplicateQuestion(question)}>Nhân bản</button>
+                        <button onClick={() => openQuestion(question)}>Sửa</button>
+                        <button onClick={() => deleteQuestion(question)}>Xóa</button>
+                      </div>
                     </article>
                   ))}
                   {!questions.length && <div className={styles.emptyQuestions}><span>＋</span><h3>Bộ đề chưa có câu hỏi</h3><p>Thêm câu hỏi đầu tiên với 4 lựa chọn.</p><button onClick={openNewQuestion}>＋ Thêm câu hỏi</button></div>}

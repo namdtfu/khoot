@@ -16,6 +16,7 @@ const STATUS_LABELS: Record<GameStatus, string> = {
   waiting: "Đang chờ học sinh",
   countdown: "Đang đếm ngược",
   playing: "Đang chơi",
+  paused: "Đang tạm dừng",
   reveal: "Đang xem đáp án",
   finished: "Phiên đã kết thúc",
 };

@@ -24,6 +24,7 @@ export default function PlayPage() {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [canReconnect, setCanReconnect] = useState(false);
   const [now, setNow] = useState(0);
 
   useEffect(() => {
@@ -53,7 +54,13 @@ export default function PlayPage() {
     });
     if (loadError) {
       if (!joined) return;
-      setError(getErrorMessage(loadError));
+      const message = getErrorMessage(loadError);
+      if (message.includes("Không tìm thấy người chơi")) {
+        setJoined(false);
+        setSnapshot(null);
+        setCanReconnect(true);
+      }
+      setError(message);
       return;
     }
     const next = data as GameSnapshot;
@@ -75,7 +82,7 @@ export default function PlayPage() {
       .channel(`game:${roomToken}`, { config: { private: false } })
       .on("broadcast", { event: "state" }, () => void loadGame())
       .subscribe();
-    const fallback = window.setInterval(() => void loadGame(), 5000);
+    const fallback = window.setInterval(() => void loadGame(), 2000);
     return () => {
       window.clearInterval(fallback);
       void supabase.removeChannel(channel);
@@ -96,10 +103,33 @@ export default function PlayPage() {
       p_player_token: playerToken,
       p_name: name.trim(),
     });
-    if (joinError) setError(getErrorMessage(joinError));
+    if (joinError) {
+      const message = getErrorMessage(joinError);
+      setError(message);
+      setCanReconnect(Boolean(name.trim()));
+    }
     else {
       setSnapshot(data as GameSnapshot);
       setJoined(true);
+      setCanReconnect(false);
+    }
+    setBusy(false);
+  };
+
+  const reconnectRoom = async () => {
+    if (!roomToken || !playerToken || !name.trim()) return;
+    setBusy(true);
+    setError("");
+    const { data, error: reconnectError } = await supabase.rpc("reclaim_game_player", {
+      p_room_token: roomToken,
+      p_player_token: playerToken,
+      p_name: name.trim(),
+    });
+    if (reconnectError) setError(getErrorMessage(reconnectError));
+    else {
+      setSnapshot(data as GameSnapshot);
+      setJoined(true);
+      setCanReconnect(false);
     }
     setBusy(false);
   };
@@ -163,6 +193,11 @@ export default function PlayPage() {
             </label>
             {error && <p className={styles.errorMessage}>{error}</p>}
             <button className={styles.joinButton} disabled={busy || !name.trim()} type="submit">{busy ? "Đang vào phòng…" : "Vào phòng →"}</button>
+            {canReconnect && (
+              <button className={styles.reconnectButton} disabled={busy || !name.trim()} type="button" onClick={() => void reconnectRoom()}>
+                Kết nối lại với tên này
+              </button>
+            )}
           </form>
         </div>
       </main>
@@ -172,11 +207,13 @@ export default function PlayPage() {
   const room = snapshot.room;
   const question = snapshot.question;
   const self = snapshot.self;
-  const remaining = secondsRemaining(
-    room.question_started_at,
-    room.current_time_limit_seconds ?? room.time_limit_seconds,
-    now,
-  );
+  const remaining = room.status === "paused" && room.paused_remaining_seconds != null
+    ? room.paused_remaining_seconds
+    : secondsRemaining(
+      room.question_started_at,
+      room.current_time_limit_seconds ?? room.time_limit_seconds,
+      now,
+    );
   const answered = self?.selected_option != null;
 
   const renderContent = () => {
@@ -243,6 +280,7 @@ export default function PlayPage() {
 
     if (!question) return <div className={styles.loading}><p>Đang nhận câu hỏi…</p></div>;
     const revealed = room.status === "reveal";
+    const paused = room.status === "paused";
 
     return (
       <>
@@ -251,8 +289,9 @@ export default function PlayPage() {
             <span className={styles.questionNumber}>CÂU {room.current_question + 1} / {room.question_count}</span>
             <div className={styles.progress}><i style={{ width: `${((room.current_question + 1) / room.question_count) * 100}%` }} /></div>
           </div>
-          <div className={`${styles.timer} ${remaining <= 5 && !revealed ? styles.urgent : ""}`}>{revealed ? "✓" : Math.ceil(remaining)}</div>
+          <div className={`${styles.timer} ${remaining <= 5 && !revealed && !paused ? styles.urgent : ""}`}>{revealed ? "✓" : paused ? "Ⅱ" : Math.ceil(remaining)}</div>
         </div>
+        {paused && <div className={styles.pauseBanner}><strong>Quản trị đã tạm dừng</strong><span>Còn {Math.ceil(remaining)} giây khi tiếp tục.</span></div>}
         <div className={styles.question}><h2>{question.prompt}</h2></div>
         <div className={styles.answers}>
           {question.options.map((option, index) => {
@@ -261,7 +300,7 @@ export default function PlayPage() {
               ? index === question.correct_option ? styles.correct : styles.wrong
               : selected ? styles.selected : "";
             return (
-              <button className={`${styles.answer} ${resultClass}`} disabled={answered || busy || revealed} onClick={() => answer(index)} key={index}>
+              <button className={`${styles.answer} ${resultClass}`} disabled={answered || busy || room.status !== "playing"} onClick={() => answer(index)} key={index}>
                 <span className={styles.answerShape}>{ANSWER_SHAPES[index]}</span>
                 <strong>{option}</strong>
                 <small>{revealed && index === question.correct_option ? "Đúng" : !revealed ? `Phím ${index + 1}` : ""}</small>
@@ -269,7 +308,7 @@ export default function PlayPage() {
             );
           })}
         </div>
-        {answered && !revealed && <div className={`${styles.answerFeedback} ${styles.waiting}`}><strong>Đã ghi nhận đáp án!</strong><small>Hãy chờ các bạn còn lại hoặc chờ hết giờ.</small></div>}
+        {answered && !revealed && !paused && <div className={`${styles.answerFeedback} ${styles.waiting}`}><strong>Đã ghi nhận đáp án!</strong><small>Hãy chờ các bạn còn lại hoặc chờ hết giờ.</small></div>}
         {revealed && (
           <div className={`${styles.answerFeedback} ${self?.is_correct ? styles.good : styles.bad}`}>
             <strong>{self?.is_correct ? `Chính xác! +${self.points} điểm` : "Chưa chính xác"}</strong>

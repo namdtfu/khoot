@@ -44,3 +44,20 @@ test("rejects questions without a declared correct answer", () => {
   assert.equal(result.questions.length, 0);
   assert.match(result.errors[0].message, /Chưa có đáp án đúng/);
 });
+
+test("parses a per-question time directive", () => {
+  const result = parseQuestionText(
+    "Câu 1: Từ hello nghĩa là gì? A. Xin chào B. Tạm biệt C. Cảm ơn D. Xin lỗi Đáp án: A Thời gian: 35 giây",
+  );
+
+  assert.equal(result.errors.length, 0);
+  assert.equal(result.questions[0].time_limit_seconds, 35);
+  assert.equal(result.questions[0].options[3], "Xin lỗi");
+});
+
+test("rejects an invalid per-question time", () => {
+  const result = parseQuestionText("Câu 1: Chọn A A. Một B. Hai C. Ba D. Bốn Đáp án: A Thời gian: 3");
+
+  assert.equal(result.questions.length, 0);
+  assert.match(result.errors[0].message, /5 đến 120 giây/);
+});

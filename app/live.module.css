@@ -312,6 +312,17 @@
   box-shadow: 0 4px 0 #c94e25;
 }
 .startButton:disabled, .readyButton:disabled, .joinButton:disabled { cursor: not-allowed; opacity: .45; }
+.reconnectButton {
+  width: 100%;
+  margin-top: 9px;
+  padding: 11px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 850;
+  cursor: pointer;
+}
 .helper { margin: 10px 0 0; color: #7e8b86; font-size: 10px; line-height: 1.5; text-align: center; }
 
 .centerStage { display: grid; place-content: center; min-height: 490px; text-align: center; }
@@ -512,6 +523,64 @@ button.answer { cursor: pointer; font: inherit; }
   font-weight: 850;
   text-decoration: none;
   box-shadow: 0 4px 0 #071612;
+}
+
+.startCurrentButton {
+  margin-top: 10px;
+  padding: 11px 16px;
+  border: 1px solid #163a31;
+  border-radius: 8px;
+  background: transparent;
+  color: #163a31;
+  font-weight: 850;
+  cursor: pointer;
+}
+.gameControlBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid #d8d1c6;
+  border-radius: 12px;
+  background: #fffaf1;
+}
+.gameControlBar button {
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ink);
+  color: white;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.gameControlBar .skipButton { margin-left: auto; background: #a44224; }
+.pauseBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: #fff0bf;
+  color: #624b00;
+}
+.pauseBanner strong { font-size: 14px; }
+.pauseBanner span { font-size: 10px; }
+.removePlayerButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: #ffe3dc;
+  color: #a44224;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .historyPanel {
