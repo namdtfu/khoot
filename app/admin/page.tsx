@@ -139,6 +139,13 @@ export default function AdminPage() {
     [folderChoices, folders, selectedFolder],
   );
   const lobbyLink = useMemo(() => lobby ? buildLobbyLink(lobby.public_token) : "", [lobby]);
+  const estimatedDuration = useMemo(
+    () => questions.reduce(
+      (total, question) => total + (question.time_limit_seconds ?? packForm.time_limit_seconds),
+      0,
+    ),
+    [questions, packForm.time_limit_seconds],
+  );
 
   const showError = (error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
@@ -902,6 +909,31 @@ export default function AdminPage() {
                   <button className={styles.addQuestionButton} onClick={openNewQuestion}>＋ Thêm câu hỏi</button>
                 </div>
               </div>
+
+              <section className={styles.setMetrics} aria-label="Tổng quan bộ đề">
+                <article>
+                  <span>SỐ CÂU HỎI</span>
+                  <strong>{questions.length}</strong>
+                  <small>câu trắc nghiệm</small>
+                </article>
+                <article>
+                  <span>THỜI LƯỢNG ƯỚC TÍNH</span>
+                  <strong>{estimatedDuration >= 60 ? Math.ceil(estimatedDuration / 60) + " phút" : estimatedDuration + " giây"}</strong>
+                  <small>chưa gồm thời gian xem đáp án</small>
+                </article>
+                <article>
+                  <span>CÁCH TÍNH ĐIỂM</span>
+                  <strong>{packForm.scoring_mode === "speed" ? "Đúng & nhanh" : "Chỉ cần đúng"}</strong>
+                  <small>{packForm.shuffle_questions || packForm.shuffle_options ? "có xáo trộn" : "thứ tự cố định"}</small>
+                </article>
+                <article>
+                  <span>TRẠNG THÁI</span>
+                  <strong className={selectedSet.is_published ? styles.metricPublished : styles.metricDraft}>
+                    {selectedSet.is_published ? "Sẵn sàng" : "Bản nháp"}
+                  </strong>
+                  <small>{selectedSet.is_published ? "có thể mở phòng" : "chưa thể mở phòng"}</small>
+                </article>
+              </section>
 
               <form className={styles.packSettings} onSubmit={saveSet}>
                 <div className={styles.sectionTitle}>

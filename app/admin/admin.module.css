@@ -112,23 +112,34 @@
 .loading span { font-size: 30px; font-weight: 950; }
 .loading p { color: #71807b; font-size: 12px; }
 
-.dashboard { background: #ede8de; }
+.dashboard {
+  --paper: #efe9df;
+  --cream: #fffdf8;
+  --orange: #ff6f3d;
+  --green: #22b889;
+  --yellow: #ffcc48;
+  background: var(--paper);
+}
 .header {
   display: grid;
-  grid-template-columns: 250px 1fr auto;
+  grid-template-columns: auto minmax(220px, 1fr) auto auto;
   align-items: center;
-  min-height: 72px;
-  padding: 0 26px;
-  border-bottom: 1px solid #d7d0c5;
-  background: var(--cream);
+  gap: 22px;
+  min-height: 76px;
+  padding: 0 28px;
+  border-bottom: 0;
+  background: var(--ink);
+  color: white;
+  box-shadow: 0 8px 24px rgba(19,42,37,.12);
 }
-.logo { color: var(--ink); font-size: 23px; font-weight: 950; letter-spacing: -1.5px; text-decoration: none; }
+.logo { color: white; font-size: 25px; font-weight: 950; letter-spacing: -1.5px; text-decoration: none; transform: rotate(-2deg); }
 .logo span { color: var(--orange); }
 .headerTitle { display: flex; flex-direction: column; gap: 2px; }
-.headerTitle strong { font-size: 14px; }
+.headerTitle span { color: var(--yellow); }
+.headerTitle strong { color: white; font-size: 14px; }
 .account { display: flex; align-items: center; gap: 15px; }
 .historyLink {
-  margin-left: auto;
+  margin-left: 0;
   padding: 9px 12px;
   border: 1px solid rgba(255,255,255,.28);
   border-radius: 8px;
@@ -137,8 +148,10 @@
   font-weight: 850;
   text-decoration: none;
 }
+.historyLink:hover { border-color: var(--yellow); color: var(--yellow); }
 .account > div { display: flex; flex-direction: column; gap: 2px; text-align: right; }
-.account strong { max-width: 230px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; }
+.account span { color: rgba(255,255,255,.52); }
+.account strong { max-width: 230px; overflow: hidden; color: white; font-size: 11px; text-overflow: ellipsis; }
 .account button, .deleteButton, .textButton, .cardActions button, .editorFooter button, .closeButton {
   cursor: pointer;
   border: 1px solid #d1cabf;
@@ -148,10 +161,20 @@
   font-size: 11px;
   font-weight: 800;
 }
-.account button { padding: 9px 12px; }
-.workspace { display: grid; grid-template-columns: 290px 1fr; min-height: calc(100vh - 72px); }
-.sidebar { display: flex; flex-direction: column; border-right: 1px solid #d7d0c5; background: var(--cream); }
-.sidebarHeading { display: flex; align-items: center; justify-content: space-between; padding: 23px 20px 16px; }
+.account button { padding: 9px 12px; border-color: rgba(255,255,255,.24); color: white; }
+.account button:hover { border-color: #ff8d66; background: rgba(255,111,61,.12); color: #ffad91; }
+.workspace { display: grid; grid-template-columns: 310px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: calc(100vh - 76px);
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid #d2cabf;
+  background: #f8f4ec;
+}
+.sidebarHeading { display: flex; align-items: center; justify-content: space-between; padding: 24px 18px 17px; }
 .sidebarHeading > div:first-child { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
 .sidebarHeading strong { font-size: 14px; }
 .sidebarActions { display: flex; gap: 5px; }
@@ -172,12 +195,12 @@
 .sidebarActions button:first-child { background: var(--ink); box-shadow: 0 3px 0 #071612; font-size: 12px; }
 .sidebarActions button:disabled { cursor: not-allowed; opacity: .45; }
 .importLauncher {
-  margin: 0 11px 11px;
-  padding: 10px 12px;
+  margin: 0 14px 13px;
+  padding: 11px 13px;
   cursor: pointer;
   border: 1px dashed #cfc6b9;
   border-radius: 8px;
-  background: #f7f1e7;
+  background: white;
   color: var(--ink);
   font: 850 11px "Be Vietnam Pro", sans-serif;
   text-align: left;
@@ -185,9 +208,9 @@
 .importLauncher:hover { border-color: var(--orange); color: var(--orange); }
 .importLauncher:disabled { cursor: not-allowed; opacity: .45; }
 .permanentRoomCard {
-  margin: 0 11px 11px;
-  padding: 11px;
-  border-radius: 9px;
+  margin: 0 14px 13px;
+  padding: 13px;
+  border-radius: 11px;
   background: var(--ink);
   color: white;
 }
@@ -221,7 +244,7 @@
   text-decoration: none;
 }
 .permanentRoomCard a { background: rgba(255,255,255,.12); color: white; }
-.questionTree { flex: 1; min-height: 180px; padding: 0 8px 12px; overflow-x: hidden; overflow-y: auto; }
+.questionTree { flex: 1; min-height: 180px; padding: 0 11px 14px; overflow-x: hidden; overflow-y: auto; }
 .treeRootDrop {
   display: grid;
   grid-template-columns: 20px auto 1fr;
@@ -249,7 +272,8 @@
   border-radius: 7px;
 }
 .treeFolderRow[draggable="true"], .treeSetRow[draggable="true"] { cursor: grab; }
-.treeFolderRow:hover, .treeSetRow:hover, .treeSelected { border-color: #d9d2c7; background: #f1ebe1; }
+.treeFolderRow:hover, .treeSetRow:hover { border-color: #d9d2c7; background: white; }
+.treeSelected { border-color: #ffb398; background: #fff1e8; box-shadow: inset 3px 0 0 var(--orange); }
 .treeToggle {
   flex: 0 0 20px;
   width: 20px; height: 28px;
@@ -306,10 +330,10 @@
 }
 .treeOrderButtons button:disabled { cursor: default; opacity: .25; }
 .treeEmpty { margin: 25px 12px; color: #84918d; font-size: 10px; text-align: center; }
-.sidebarHelp { margin: 15px; padding: 14px; border-radius: 9px; background: #f1ebe1; }
+.sidebarHelp { margin: 14px; padding: 14px; border: 1px solid #e0d8cd; border-radius: 10px; background: white; }
 .sidebarHelp p { margin: 5px 0 0; color: #71807b; font-size: 10px; line-height: 1.45; }
 
-.content { min-width: 0; padding: 28px clamp(22px, 4vw, 58px) 60px; }
+.content { min-width: 0; padding: 32px clamp(22px, 4vw, 58px) 68px; background: var(--paper); }
 .errorBanner, .successBanner {
   display: flex;
   justify-content: space-between;
@@ -323,9 +347,9 @@
 .errorBanner { background: #ffe1da; color: #8f3021; }
 .successBanner { background: #dff5ec; color: #146d52; }
 .errorBanner button, .successBanner button { cursor: pointer; border: 0; background: none; color: inherit; font-size: 17px; }
-.contentTop, .packSettings, .questionEditor, .questionSection, .noSelection, .importPanel, .folderPanel { max-width: 1100px; margin-right: auto; margin-left: auto; }
-.contentTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 23px; }
-.contentTop h1 { margin: 5px 0 3px; font-size: clamp(27px, 3vw, 38px); letter-spacing: -1.5px; }
+.contentTop, .setMetrics, .packSettings, .questionEditor, .questionSection, .noSelection, .importPanel, .folderPanel { max-width: 1180px; margin-right: auto; margin-left: auto; }
+.contentTop { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+.contentTop h1 { margin: 5px 0 3px; font-size: clamp(32px, 4vw, 46px); line-height: 1.05; letter-spacing: -2.2px; }
 .contentTop p { margin: 0; color: #76847f; font-size: 11px; }
 .breadcrumb { color: var(--orange); }
 .topActions { display: flex; gap: 9px; }
@@ -335,8 +359,8 @@
   gap: 7px;
   padding: 5px 8px 5px 11px;
   border: 1px solid #d8d1c6;
-  border-radius: 7px;
-  background: var(--cream);
+  border-radius: 9px;
+  background: white;
 }
 .roomSizeControl span { color: #71807b; font-size: 9px; font-weight: 850; white-space: nowrap; }
 .roomSizeControl input {
@@ -350,18 +374,38 @@
   font-size: 12px;
   font-weight: 850;
 }
-.addQuestionButton { padding: 13px 16px; }
-.openRoomButton { padding: 13px 16px; background: var(--orange); box-shadow: 0 4px 0 #c94e25; }
-.packSettings, .questionEditor, .questionSection {
-  margin-bottom: 20px;
-  padding: 23px;
-  border: 1px solid #d9d2c7;
+.addQuestionButton { padding: 13px 16px; border-radius: 9px; }
+.openRoomButton { padding: 13px 16px; border-radius: 9px; background: var(--orange); box-shadow: 0 4px 0 #c94e25; }
+.setMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.setMetrics article {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dad2c7;
   border-radius: 12px;
+  background: #fffdf8;
+  box-shadow: 0 2px 0 rgba(19,42,37,.03);
+}
+.setMetrics span { display: block; color: #76837f; font-size: 8px; font-weight: 900; letter-spacing: .9px; }
+.setMetrics strong { display: block; margin-top: 7px; overflow: hidden; font-size: clamp(18px, 2vw, 25px); letter-spacing: -.8px; text-overflow: ellipsis; white-space: nowrap; }
+.setMetrics small { display: block; margin-top: 3px; overflow: hidden; color: #8a9490; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.setMetrics .metricPublished { color: #147455; }
+.setMetrics .metricDraft { color: #a36a12; }
+.packSettings, .questionEditor, .questionSection {
+  margin-bottom: 18px;
+  padding: clamp(20px, 2.5vw, 28px);
+  border: 1px solid #d9d2c7;
+  border-radius: 15px;
   background: var(--cream);
+  box-shadow: 7px 9px 0 rgba(19,42,37,.055);
 }
 .sectionTitle { display: flex; align-items: center; justify-content: space-between; margin-bottom: 19px; }
 .sectionTitle > div:first-child { display: flex; flex-direction: column; gap: 3px; }
-.sectionTitle strong { font-size: 14px; }
+.sectionTitle strong { font-size: 16px; letter-spacing: -.3px; }
 .formActions, .editorFooter > div { display: flex; gap: 8px; }
 .deleteButton, .saveButton { padding: 9px 13px; }
 .deleteButton { color: #b43c2a; }
@@ -380,9 +424,10 @@
   min-height: 68px;
   padding: 11px;
   border: 1px solid #ddd6cb;
-  border-radius: 9px;
-  background: #fffdf8;
+  border-radius: 11px;
+  background: #fbf8f2;
 }
+.gameOptions label:hover { border-color: #bdb4a8; background: white; }
 .gameOptions input[type="checkbox"] { width: 18px; height: 18px; }
 .gameOptions span { display: flex; flex: 1; flex-direction: column; gap: 3px; }
 .gameOptions small { color: #7b8984; font-size: 8px; font-weight: 500; }
@@ -422,13 +467,14 @@
 .switchRow input:checked + span i::after { transform: translateX(16px); }
 .switchRow b { color: var(--ink); font-size: 11px; }
 .switchRow small { color: #85918d; font-size: 9px; font-weight: 500; }
-.questionEditor { border: 2px solid var(--ink); box-shadow: 7px 8px 0 rgba(19,42,37,.1); }
+.questionEditor { border: 1px solid #98aaa4; box-shadow: 7px 9px 0 rgba(19,42,37,.09); }
 .closeButton { width: 30px; height: 30px; font-size: 18px; }
 .importPanel {
   padding: clamp(20px, 3vw, 32px);
   border: 1px solid #d9d2c7;
-  border-radius: 12px;
+  border-radius: 15px;
   background: var(--cream);
+  box-shadow: 8px 10px 0 rgba(19,42,37,.06);
 }
 .importIntro { max-width: 720px; margin: -6px 0 20px; color: #6f7d78; font-size: 12px; line-height: 1.6; }
 .importSettings { display: grid; grid-template-columns: 1.3fr 1fr .7fr 1fr; gap: 12px; }
@@ -486,8 +532,9 @@
 .folderPanel {
   padding: clamp(24px, 4vw, 42px);
   border: 1px solid #d9d2c7;
-  border-radius: 14px;
+  border-radius: 16px;
   background: var(--cream);
+  box-shadow: 8px 10px 0 rgba(19,42,37,.06);
 }
 .folderPanelTitle { display: flex; align-items: center; justify-content: space-between; gap: 25px; margin-top: 12px; padding-bottom: 24px; border-bottom: 1px solid #e3dcd2; }
 .folderPanelTitle > div:first-child { display: flex; align-items: center; gap: 15px; min-width: 0; }
@@ -573,9 +620,11 @@
   gap: 14px;
   padding: 15px;
   border: 1px solid #e0d9cf;
-  border-radius: 9px;
-  background: #faf7f0;
+  border-radius: 11px;
+  background: #fbf8f2;
+  transition: border-color .15s, background .15s, transform .15s;
 }
+.questionCard:hover { border-color: #c9c0b4; background: white; transform: translateY(-1px); }
 .number {
   display: grid;
   place-items: center;
@@ -620,7 +669,7 @@
 .emptyQuestions h3, .noSelection h2 { margin: 0 0 7px; }
 .emptyQuestions p, .noSelection p { margin: 0 0 17px; color: #788681; font-size: 11px; }
 .emptyQuestions button { padding: 11px 14px; }
-.noSelection { margin-top: 12vh; border: 1px dashed #c8c1b6; border-radius: 13px; background: rgba(255,250,241,.55); }
+.noSelection { margin-top: 10vh; border: 1px dashed #c8c1b6; border-radius: 16px; background: rgba(255,253,248,.78); box-shadow: 8px 10px 0 rgba(19,42,37,.04); }
 .noSelectionActions { display: flex; justify-content: center; gap: 8px; }
 .noSelectionActions button { padding: 11px 14px; background: var(--ink); color: white; box-shadow: 0 3px 0 #071612; }
 .noSelectionActions button:first-child { background: var(--orange); box-shadow: 0 3px 0 #c94e25; }
@@ -629,16 +678,17 @@
   .authShell { grid-template-columns: 1fr; gap: 40px; padding-top: 100px; }
   .authIntro h1 { font-size: clamp(46px, 13vw, 72px); letter-spacing: -3px; }
   .authCard { margin: 0 auto; }
-  .header { grid-template-columns: 1fr auto; padding: 0 15px; }
+  .header { grid-template-columns: auto 1fr auto; gap: 12px; padding: 0 15px; }
   .headerTitle { display: none; }
   .account > div { display: none; }
   .workspace { grid-template-columns: 1fr; }
-  .sidebar { border-right: 0; border-bottom: 1px solid #d7d0c5; }
+  .sidebar { position: static; height: auto; max-height: 510px; border-right: 0; border-bottom: 1px solid #d7d0c5; }
   .questionTree { max-height: 340px; padding-right: 12px; padding-left: 12px; }
   .sidebarHelp { display: none; }
   .importLauncher { margin-right: 15px; margin-left: 15px; }
   .permanentRoomCard { margin-right: 15px; margin-left: 15px; }
   .content { padding: 22px 14px 45px; }
+  .setMetrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .importSettings { grid-template-columns: 1fr 1fr; }
   .importSettings label:first-child { grid-column: 1 / -1; }
   .folderPanel { padding: 24px; }
@@ -648,10 +698,14 @@
   .authShell { padding-right: 18px; padding-left: 18px; }
   .featureRow { flex-direction: column; gap: 10px; }
   .authCard { padding: 24px 20px; }
-  .contentTop { align-items: flex-end; gap: 12px; }
+  .header { grid-template-columns: 1fr auto; }
+  .historyLink { display: none; }
+  .contentTop { align-items: stretch; flex-direction: column; gap: 16px; }
   .contentTop h1 { font-size: 25px; }
   .addQuestionButton { flex: 0 0 auto; font-size: 11px; }
   .topActions { align-items: stretch; flex-direction: column; }
+  .setMetrics { gap: 7px; }
+  .setMetrics article { padding: 13px; }
   .roomSizeControl { justify-content: space-between; }
   .openRoomButton, .addQuestionButton { padding: 10px 12px; }
   .packGrid, .optionsGrid, .gameOptions { grid-template-columns: 1fr; }
@@ -678,4 +732,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .switchRow i, .switchRow i::after { transition: none; }
+  .questionCard { transition: none; }
+  .questionCard:hover { transform: none; }
 }
