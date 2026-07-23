@@ -45,12 +45,14 @@ test("build includes admin, live-game, history and self-study routes", async () 
     "../app/learn/page.tsx",
     "../supabase/migrations/202607230006_complete_classroom_workflows.sql",
     "../supabase/migrations/202607230007_create_self_study_portal.sql",
+    "../supabase/migrations/202607230008_fix_admin_library_access.sql",
   ].map((path) => new URL(path, import.meta.url));
 
   await Promise.all(files.map((file) => access(file)));
   const historyPage = await readFile(files[3], "utf8");
   const classroomMigration = await readFile(files[5], "utf8");
   const studyMigration = await readFile(files[6], "utf8");
+  const accessFixMigration = await readFile(files[7], "utf8");
   assert.match(historyPage, /list_game_history/);
   assert.match(historyPage, /gameHistoryToCsv/);
   assert.match(classroomMigration, /pause_game/);
@@ -59,4 +61,5 @@ test("build includes admin, live-game, history and self-study routes", async () 
   assert.match(studyMigration, /create table public\.user_profiles/);
   assert.match(studyMigration, /record_study_review/);
   assert.match(studyMigration, /reset_study_set_progress/);
+  assert.match(accessFixMigration, /grant execute on function public\.is_admin\(\) to authenticated/);
 });
